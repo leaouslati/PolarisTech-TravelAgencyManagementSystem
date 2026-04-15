@@ -1,6 +1,36 @@
+/* Fix dark mode autofill/auto-complete background for inputs */
+
+input:-webkit-autofill,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:active {
+  transition: background-color 9999s ease-in-out 0s, color 9999s ease-in-out 0s;
+  -webkit-box-shadow: 0 0 0 1000px #f8fafc inset !important; /* Tailwind slate-50 */
+  box-shadow: 0 0 0 1000px #f8fafc inset !important;
+  -webkit-text-fill-color: #0f172a !important; /* Tailwind slate-800 */
+  color: #0f172a !important;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0A1628 inset !important;
+  box-shadow: 0 0 0 1000px #0A1628 inset !important;
+  -webkit-text-fill-color: #E2EEFF !important;
+  color: #E2EEFF !important;
+}
 @import "tailwindcss";
 
-/* Enable class-based dark mode (toggled via JS on <html class="dark">).
-   The yellow underline in VS Code is a false positive from the CSS language
-   server — @custom-variant is a Tailwind v4 directive and works correctly. */
+/* Tailwind v4: class-based dark mode — toggles via <html class="dark"> */
 @custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
