@@ -62,7 +62,7 @@ const Navbar = () => {
               className={`text-sm px-1 pb-0.5 font-semibold transition relative
                 ${isActive
                   ? 'text-blue-600 dark:text-blue-400 after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400 after:rounded-full after:content-[""]'
-                  : 'text-gray-700 dark:text-blue-200 hover:text-blue-600 dark:hover:text-blue-400'}`}
+                  : 'text-gray-700 dark:text-blue-200'}`}
             >
               {link.label}
             </Link>
@@ -90,6 +90,19 @@ const Navbar = () => {
           )}
         </button>
 
+        {/* Desktop Logout as text */}
+        {user && (
+          <span
+            onClick={logout}
+            className="hidden md:inline cursor-pointer text-sm font-semibold text-red-500 ml-4 select-none hover:underline"
+            tabIndex={0}
+            role="button"
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') logout(); }}
+          >
+            Logout
+          </span>
+        )}
+
         {/* Mobile hamburger */}
         <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
           <svg className="h-6 w-6 text-gray-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,10 +121,10 @@ const Navbar = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setMenuOpen(false)}
-                className={`text-base px-1 py-2 font-semibold rounded-lg transition relative
+                className={`text-base px-1 py-2 font-semibold transition relative
                   ${isActive
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-200 dark:ring-blue-700'
-                    : 'text-gray-700 dark:text-blue-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-[#232e47]'}`}
+                    ? 'text-blue-600 dark:text-blue-400 after:absolute after:left-0 after:right-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400 after:rounded-full after:content-["""]'
+                    : 'text-gray-700 dark:text-blue-200'}`}
               >
                 {link.label}
               </Link>
@@ -120,7 +133,7 @@ const Navbar = () => {
           {user && (
             <button
               onClick={() => { setMenuOpen(false); logout(); }}
-              className="mt-2 text-base font-semibold text-red-500 bg-red-50 dark:bg-red-900/30 rounded-lg py-2 transition border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="mt-2 text-base font-semibold text-red-500 bg-red-50 dark:bg-[#232e47] rounded-lg py-2 transition border border-red-200 dark:border-[#2d3a53] hover:bg-red-100 dark:hover:bg-[#232e47]/80 focus:outline-none focus:ring-2 focus:ring-red-400"
             >
               Logout
             </button>
