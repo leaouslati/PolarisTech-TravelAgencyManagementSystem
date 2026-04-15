@@ -1,6 +1,13 @@
 const express = require('express');
 const router = express.Router();
+const {
+  getAllPackages,
+  getOnePackage,
+  getRecommendations,
+} = require('../controllers/packageController');
 
-router.get('/', (req, res) => res.json({ message: 'Packages routes working' }));
+router.get('/', getAllPackages);
+router.get('/recommendations/:userId', getRecommendations);
+router.get('/:id', getOnePackage);
 
 module.exports = router;
