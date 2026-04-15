@@ -1,10 +1,6 @@
 // controllers/packageController.js
 
-const db = require('../config/db'); // adjust path if your db connection file is named differently
-
-// ─────────────────────────────────────────────
-// Helper: fetch moods array for a package
-// ─────────────────────────────────────────────
+const db = require('../config/db'); 
 async function getMoods(packageId) {
   const [rows] = await db.query(
     'SELECT MoodName FROM PackageMoods WHERE PackageID = ?',
@@ -13,10 +9,6 @@ async function getMoods(packageId) {
   return rows.map((r) => r.MoodName);
 }
 
-// ─────────────────────────────────────────────
-// ROUTE 1 — GET /api/packages
-// Query params: destination, minPrice, maxPrice, mood, date
-// ─────────────────────────────────────────────
 const getAllPackages = async (req, res) => {
   try {
     const { destination, minPrice, maxPrice, mood, date } = req.query;
