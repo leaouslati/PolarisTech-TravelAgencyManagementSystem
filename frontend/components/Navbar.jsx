@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [dark, setDark] = useState(() => localStorage.getItem('theme') === 'dark');
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -45,49 +46,53 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
-      <Link to="/" className="text-xl font-bold text-blue-600 dark:text-blue-400">
+    <nav className="bg-white dark:bg-[#1a2332] border-b border-gray-200 dark:border-[#2d3a53] px-6 py-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+      <Link to="/" className="text-xl font-bold tracking-tight text-blue-600 dark:text-blue-400" replace>
         PolarisTech
       </Link>
 
       {/* Desktop links */}
       <div className="hidden md:flex items-center gap-6">
-        {getLinks().map(link => (
-          <Link key={link.to} to={link.to}
-            className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition">
-            {link.label}
-          </Link>
-        ))}
+        {getLinks().map(link => {
+          const isActive = location.pathname === link.to;
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`text-sm px-1 pb-0.5 font-semibold transition relative
+                ${isActive
+                  ? 'text-blue-600 dark:text-blue-400 after:absolute after:left-0 after:right-0 after:-bottom-0.5 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400 after:rounded-full after:content-[""]'
+                  : 'text-gray-700 dark:text-blue-200 hover:text-blue-600 dark:hover:text-blue-400'}`}
+            >
+              {link.label}
+            </Link>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-4">
-        {user && <NotificationBell />}
+        {user && <NotificationBell iconClass="h-5 w-5" />}
 
         {/* Dark mode toggle */}
-        <button onClick={() => setDark(!dark)}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-          aria-label="Toggle dark mode">
+        <button
+          onClick={() => setDark(!dark)}
+          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#232e47] transition"
+          aria-label="Toggle dark mode"
+        >
           {dark ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 3a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V4a1 1 0 0 1 1-1zm6.364 2.636a1 1 0 0 1 0 1.414l-.707.707a1 1 0 1 1-1.414-1.414l.707-.707a1 1 0 0 1 1.414 0zM21 11a1 1 0 1 1 0 2h-1a1 1 0 1 1 0-2h1zM12 18a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zm-6.364-1.636a1 1 0 0 1 1.414 0l.707.707a1 1 0 1 1-1.414 1.414l-.707-.707a1 1 0 0 1 0-1.414zM4 11a1 1 0 1 1 0 2H3a1 1 0 1 1 0-2h1zm2.343-5.657a1 1 0 0 1 1.414 1.414l-.707.707A1 1 0 0 1 5.636 6.05l.707-.707zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700 dark:text-blue-200" fill="currentColor" viewBox="0 0 24 24">
               <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
             </svg>
           )}
         </button>
 
-        {user && (
-          <button onClick={logout}
-            className="text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400 transition">
-            Logout
-          </button>
-        )}
-
         {/* Mobile hamburger */}
         <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">
-          <svg className="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="h-6 w-6 text-gray-700 dark:text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/>
           </svg>
         </button>
@@ -95,14 +100,31 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="absolute top-16 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex flex-col px-6 py-4 gap-4 md:hidden">
-          {getLinks().map(link => (
-            <Link key={link.to} to={link.to}
-              onClick={() => setMenuOpen(false)}
-              className="text-sm text-gray-600 dark:text-gray-300 hover:text-blue-600">
-              {link.label}
-            </Link>
-          ))}
+        <div className="absolute top-16 left-0 right-0 bg-white dark:bg-[#1a2332] border-b border-gray-200 dark:border-[#2d3a53] flex flex-col px-6 py-4 gap-3 md:hidden shadow-lg">
+          {getLinks().map(link => {
+            const isActive = location.pathname === link.to;
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setMenuOpen(false)}
+                className={`text-base px-1 py-2 font-semibold rounded-lg transition relative
+                  ${isActive
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-200 dark:ring-blue-700'
+                    : 'text-gray-700 dark:text-blue-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-[#232e47]'}`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+          {user && (
+            <button
+              onClick={() => { setMenuOpen(false); logout(); }}
+              className="mt-2 text-base font-semibold text-red-500 bg-red-50 dark:bg-red-900/30 rounded-lg py-2 transition border border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-400"
+            >
+              Logout
+            </button>
+          )}
         </div>
       )}
     </nav>
