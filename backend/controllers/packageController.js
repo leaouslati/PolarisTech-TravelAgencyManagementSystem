@@ -3,10 +3,10 @@
 const db = require('../db/connection'); 
 async function getMoods(packageId) {
   const [rows] = await db.query(
-    'SELECT MoodName FROM PackageMoods WHERE PackageID = ?',
+    'SELECT mood FROM PackageMoods WHERE package_id = ?',
     [packageId]
   );
-  return rows.map((r) => r.MoodName);
+  return rows.map((r) => r.mood);
 }
 
 const getAllPackages = async (req, res) => {
@@ -15,46 +15,46 @@ const getAllPackages = async (req, res) => {
 
     let query = `
       SELECT DISTINCT
-        tp.PackageID   AS package_id,
-        tp.PackageName AS package_name,
-        d.City         AS city,
-        d.Country      AS country,
-        tp.TravelDate  AS travel_date,
-        tp.ReturnDate  AS return_date,
-        tp.Duration    AS duration,
-        tp.TotalPrice  AS total_price,
-        tp.AvailableSlots AS available_slots,
-        tp.StatusAvailability AS status_availability
+        tp.package_id,
+        tp.package_name,
+        d.city,
+        d.country,
+        tp.travel_date,
+        tp.return_date,
+        tp.duration,
+        tp.total_price,
+        tp.available_slots,
+        tp.status_availability
       FROM TravelPackages tp
-      JOIN Destinations d ON tp.DestinationID = d.DestinationID
-      LEFT JOIN PackageMoods pm ON tp.PackageID = pm.PackageID
-      WHERE tp.StatusAvailability = 'active'
+      JOIN Destinations d ON tp.destination_id = d.destination_id
+      LEFT JOIN PackageMoods pm ON tp.package_id = pm.package_id
+      WHERE tp.status_availability = 'active'
     `;
 
     const params = [];
 
     if (destination) {
-      query += ' AND (d.City LIKE ? OR d.Country LIKE ?)';
+      query += ' AND (d.city LIKE ? OR d.country LIKE ?)';
       params.push(`%${destination}%`, `%${destination}%`);
     }
 
     if (minPrice) {
-      query += ' AND tp.TotalPrice >= ?';
+      query += ' AND tp.total_price >= ?';
       params.push(Number(minPrice));
     }
 
     if (maxPrice) {
-      query += ' AND tp.TotalPrice <= ?';
+      query += ' AND tp.total_price <= ?';
       params.push(Number(maxPrice));
     }
 
     if (mood) {
-      query += ' AND pm.MoodName = ?';
+      query += ' AND pm.mood = ?';
       params.push(mood);
     }
 
     if (date) {
-      query += ' AND tp.TravelDate = ?';
+      query += ' AND tp.travel_date = ?';
       params.push(date);
     }
 
@@ -87,6 +87,9 @@ const getAllPackages = async (req, res) => {
 // ROUTE 2 — GET /api/packages/:id
 // Returns full package details
 // ─────────────────────────────────────────────
+// ROUTE 2 — GET /api/packages/:id
+// Returns full package details
+// ─────────────────────────────────────────────
 const getOnePackage = async (req, res) => {
   try {
     const { id } = req.params;
@@ -94,22 +97,22 @@ const getOnePackage = async (req, res) => {
     // Main package + destination
     const [pkgRows] = await db.query(
       `SELECT
-        tp.PackageID   AS package_id,
-        tp.PackageName AS package_name,
-        tp.Description AS description,
-        d.City         AS city,
-        d.Country      AS country,
-        d.Description  AS destination_description,
-        d.ClimateInfo  AS climate_info,
-        tp.TravelDate  AS travel_date,
-        tp.ReturnDate  AS return_date,
-        tp.Duration    AS duration,
-        tp.TotalPrice  AS total_price,
-        tp.AvailableSlots AS available_slots,
-        tp.StatusAvailability AS status_availability
+        tp.package_id,
+        tp.package_name,
+        tp.description,
+        d.city,
+        d.country,
+        d.description AS destination_description,
+        d.climate_info,
+        tp.travel_date,
+        tp.return_date,
+        tp.duration,
+        tp.total_price,
+        tp.available_slots,
+        tp.status_availability
       FROM TravelPackages tp
-      JOIN Destinations d ON tp.DestinationID = d.DestinationID
-      WHERE tp.PackageID = ?`,
+      JOIN Destinations d ON tp.destination_id = d.destination_id
+      WHERE tp.package_id = ?`,
       [id]
     );
 
@@ -122,36 +125,30 @@ const getOnePackage = async (req, res) => {
     // Moods
     const moods = await getMoods(id);
 
-    // Add-ons (if you have a PackageAddOns table — adjust column names if needed)
-    const [addOns] = await db.query(
-      'SELECT AddOnName AS name, Price AS price FROM PackageAddOns WHERE PackageID = ?',
-      [id]
-    ).catch(() => [[]]);  // returns empty if table doesn't exist yet
-
     // Hotels linked to this package
     const [hotels] = await db.query(
-      `SELECT h.HotelName, h.RoomTypes, h.PricePerNight, h.Rating, h.StatusAvailability
+      `SELECT h.hotel_name, h.room_types, h.price_per_night, h.rating, h.status_availability
        FROM Hotels h
-       JOIN PackageHotels ph ON h.HotelID = ph.HotelID
-       WHERE ph.PackageID = ?`,
+       JOIN PackageHotels ph ON h.hotel_id = ph.hotel_id
+       WHERE ph.package_id = ?`,
       [id]
     ).catch(() => [[]]);
 
     // Flights linked to this package
     const [flights] = await db.query(
-      `SELECT f.AirlineName, f.DepartureLocation, f.DepartureTime, f.ArrivalLocation, f.ArrivalTime, f.Price
+      `SELECT f.airline_name, f.departure_location, f.departure_time, f.arrival_location, f.arrival_time, f.price
        FROM Flights f
-       JOIN PackageFlights pf ON f.FlightID = pf.FlightID
-       WHERE pf.PackageID = ?`,
+       JOIN PackageFlights pf ON f.flight_id = pf.flight_id
+       WHERE pf.package_id = ?`,
       [id]
     ).catch(() => [[]]);
 
     // Tours linked to this package
     const [tours] = await db.query(
-      `SELECT t.TourName, t.Duration, t.IncludedServices, t.Price
+      `SELECT t.tour_name, t.duration, t.included_services, t.price
        FROM Tours t
-       JOIN PackageTours pt ON t.TourID = pt.TourID
-       WHERE pt.PackageID = ?`,
+       JOIN PackageTours pt ON t.tour_id = pt.tour_id
+       WHERE pt.package_id = ?`,
       [id]
     ).catch(() => [[]]);
 
@@ -174,7 +171,6 @@ const getOnePackage = async (req, res) => {
         available_slots: pkg.available_slots,
         status_availability: pkg.status_availability,
         moods,
-        add_ons: addOns,
         hotels,
         flights,
         tours,
@@ -196,38 +192,38 @@ const getRecommendations = async (req, res) => {
 
     // Get moods from wishlist packages
     const [wishlistMoods] = await db.query(
-      `SELECT DISTINCT pm.MoodName
+      `SELECT DISTINCT pm.mood
        FROM Wishlists w
-       JOIN PackageMoods pm ON w.PackageID = pm.PackageID
-       WHERE w.CustomerID = ?`,
+       JOIN PackageMoods pm ON w.package_id = pm.package_id
+       WHERE w.user_id = ?`,
       [userId]
-    );
+    ).catch(() => [[]]);
 
     // Get destination IDs from past bookings
     const [bookedDestinations] = await db.query(
-      `SELECT DISTINCT tp.DestinationID
+      `SELECT DISTINCT tp.destination_id
        FROM Bookings b
-       JOIN TravelPackages tp ON b.PackageID = tp.PackageID
-       WHERE b.CustomerID = ?`,
+       JOIN TravelPackages tp ON b.package_id = tp.package_id
+       WHERE b.customer_id = ?`,
       [userId]
-    );
+    ).catch(() => [[]]);
 
-    const moodNames = wishlistMoods.map((r) => r.MoodName);
-    const destIds = bookedDestinations.map((r) => r.DestinationID);
+    const moodNames = wishlistMoods.map((r) => r.mood);
+    const destIds = bookedDestinations.map((r) => r.destination_id);
 
     let packages = [];
 
     if (moodNames.length === 0 && destIds.length === 0) {
       // No history — return 3 random active packages
       const [random] = await db.query(
-        `SELECT tp.PackageID AS package_id, tp.PackageName AS package_name,
-                d.City AS city, d.Country AS country,
-                tp.TravelDate AS travel_date, tp.ReturnDate AS return_date,
-                tp.Duration AS duration, tp.TotalPrice AS total_price,
-                tp.AvailableSlots AS available_slots
+        `SELECT tp.package_id, tp.package_name,
+                d.city, d.country,
+                tp.travel_date, tp.return_date,
+                tp.duration, tp.total_price,
+                tp.available_slots
          FROM TravelPackages tp
-         JOIN Destinations d ON tp.DestinationID = d.DestinationID
-         WHERE tp.StatusAvailability = 'active'
+         JOIN Destinations d ON tp.destination_id = d.destination_id
+         WHERE tp.status_availability = 'active'
          ORDER BY RAND()
          LIMIT 3`
       );
@@ -236,27 +232,27 @@ const getRecommendations = async (req, res) => {
       // Build a query matching moods OR destinations
       let recQuery = `
         SELECT DISTINCT
-          tp.PackageID AS package_id, tp.PackageName AS package_name,
-          d.City AS city, d.Country AS country,
-          tp.TravelDate AS travel_date, tp.ReturnDate AS return_date,
-          tp.Duration AS duration, tp.TotalPrice AS total_price,
-          tp.AvailableSlots AS available_slots
+          tp.package_id, tp.package_name,
+          d.city, d.country,
+          tp.travel_date, tp.return_date,
+          tp.duration, tp.total_price,
+          tp.available_slots
         FROM TravelPackages tp
-        JOIN Destinations d ON tp.DestinationID = d.DestinationID
-        LEFT JOIN PackageMoods pm ON tp.PackageID = pm.PackageID
-        WHERE tp.StatusAvailability = 'active'
+        JOIN Destinations d ON tp.destination_id = d.destination_id
+        LEFT JOIN PackageMoods pm ON tp.package_id = pm.package_id
+        WHERE tp.status_availability = 'active'
       `;
 
       const recParams = [];
       const conditions = [];
 
       if (moodNames.length > 0) {
-        conditions.push(`pm.MoodName IN (${moodNames.map(() => '?').join(',')})`);
+        conditions.push(`pm.mood IN (${moodNames.map(() => '?').join(',')})`);
         recParams.push(...moodNames);
       }
 
       if (destIds.length > 0) {
-        conditions.push(`tp.DestinationID IN (${destIds.map(() => '?').join(',')})`);
+        conditions.push(`tp.destination_id IN (${destIds.map(() => '?').join(',')})`);
         recParams.push(...destIds);
       }
 
@@ -270,8 +266,14 @@ const getRecommendations = async (req, res) => {
     // Attach moods to each
     const result = await Promise.all(
       packages.map(async (pkg) => ({
-        ...pkg,
+        package_id: pkg.package_id,
+        package_name: pkg.package_name,
         destination: { city: pkg.city, country: pkg.country },
+        travel_date: pkg.travel_date,
+        return_date: pkg.return_date,
+        duration: pkg.duration,
+        total_price: pkg.total_price,
+        available_slots: pkg.available_slots,
         moods: await getMoods(pkg.package_id),
       }))
     );
