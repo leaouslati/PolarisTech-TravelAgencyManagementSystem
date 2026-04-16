@@ -130,14 +130,16 @@ const login = async (req, res) => {
       [user.user_id]
     );
 
-    // Check password expiry (90 days)
-    const ageInDays =
-      (Date.now() - new Date(user.password_changed_at).getTime()) / (1000 * 60 * 60 * 24);
-    if (ageInDays > 90) {
-      return res.status(200).json({
-        status: 'password_expired',
-        message: 'Your password has expired. Please reset it.'
-      });
+    // Check password expiry (90 days) — skip if never explicitly set
+    if (user.password_changed_at) {
+      const ageInDays =
+        (Date.now() - new Date(user.password_changed_at).getTime()) / (1000 * 60 * 60 * 24);
+      if (ageInDays > 90) {
+        return res.status(200).json({
+          status: 'password_expired',
+          message: 'Your password has expired. Please reset it.'
+        });
+      }
     }
 
     const token = jwt.sign(
