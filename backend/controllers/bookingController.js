@@ -1,3 +1,4 @@
+// Booking and payment logic
 const db = require('../db/connection');
 
 const createBookingCode = async () => {
