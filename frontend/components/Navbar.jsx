@@ -71,7 +71,7 @@ const Navbar = () => {
       </div>
 
       <div className="flex items-center gap-4">
-        {user && <NotificationBell iconClass="h-5 w-5" />}
+        {user && <NotificationBell />}
 
         {/* Dark mode toggle */}
         <button
