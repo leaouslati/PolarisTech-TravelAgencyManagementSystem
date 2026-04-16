@@ -87,9 +87,6 @@ const getAllPackages = async (req, res) => {
 // ROUTE 2 — GET /api/packages/:id
 // Returns full package details
 // ─────────────────────────────────────────────
-// ROUTE 2 — GET /api/packages/:id
-// Returns full package details
-// ─────────────────────────────────────────────
 const getOnePackage = async (req, res) => {
   try {
     const { id } = req.params;
