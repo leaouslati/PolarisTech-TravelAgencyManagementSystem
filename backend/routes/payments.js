@@ -5,7 +5,7 @@ const authMiddleware = require('../middleware/auth');
 const bookingController = require('../controllers/bookingController');
 
 router.use(authMiddleware);
-
+// Payment routes
 router.post('/', bookingController.processPayment);
 
 module.exports = router;
