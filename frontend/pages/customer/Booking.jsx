@@ -76,7 +76,7 @@ export default function Booking() {
       setLoading(false);
     }
   };
-
+// Success screen after booking is submitted
   if (successData) {
     return (
       <div className="min-h-screen bg-slate-50 px-4 py-8 dark:bg-slate-900">
