@@ -267,7 +267,7 @@ const Browse = () => {
 
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-2 mb-1">
-                        <h3 className="font-semibold text-slate-800 dark:text-slate-100 truncate">
+                        <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                           {pkg.package_name}
                         </h3>
                         <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
