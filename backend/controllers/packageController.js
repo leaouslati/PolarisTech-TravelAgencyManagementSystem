@@ -126,6 +126,12 @@ const getOnePackage = async (req, res) => {
     const moods = await getMoods(id);
 
     // Hotels linked to this package
+    const [addOns] = await db.query(
+      'SELECT name, price FROM AddOns WHERE package_id = ?',
+      [id]
+    ).catch(() => [[]]);
+
+    // Hotels linked to this package
     const [hotels] = await db.query(
       `SELECT h.hotel_name, h.room_types, h.price_per_night, h.rating, h.status_availability
        FROM Hotels h
@@ -171,6 +177,7 @@ const getOnePackage = async (req, res) => {
         available_slots: pkg.available_slots,
         status_availability: pkg.status_availability,
         moods,
+        add_ons: addOns,
         hotels,
         flights,
         tours,

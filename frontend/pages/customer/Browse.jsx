@@ -4,35 +4,44 @@ import api from '../../api/axios';
 import Layout from '../../components/Layout';
 import './Browse.css';
 
-const MOOD_OPTIONS = ['Adventure', 'Relaxation', 'Culture', 'Luxury', 'Budget'];
+const MOOD_OPTIONS = ['Adventure', 'Relaxation', 'Cultural', 'Family', 'Romantic'];
 
 const Browse = () => {
   const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
-  const [filteredPackages, setFilteredPackages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMoods, setSelectedMoods] = useState([]);
+  const [selectedMood, setSelectedMood] = useState('');
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(5000);
   const [selectedDate, setSelectedDate] = useState('');
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
 
-  // Fetch packages on mount
+  // Fetch packages on mount and when filters change
   useEffect(() => {
     fetchPackages();
-  }, []);
+  }, [selectedMood, minPrice, maxPrice, selectedDate]);
 
-  const fetchPackages = async () => {
+  const fetchPackages = async (overrideParams = {}) => {
     try {
       setLoading(true);
-      const response = await api.get('/packages');
+      setError(null);
+
+      const params = {
+        destination: searchQuery || undefined,
+        mood: selectedMood || undefined,
+        minPrice,
+        maxPrice,
+        date: selectedDate || undefined,
+        ...overrideParams,
+      };
+
+      const response = await api.get('/packages', { params });
       if (response.data.status === 'success') {
         setPackages(response.data.data);
-        setFilteredPackages(response.data.data);
       }
     } catch (err) {
       console.error('Error fetching packages:', err);
@@ -42,60 +51,31 @@ const Browse = () => {
     }
   };
 
-  // Apply filters
-  useEffect(() => {
-    let result = packages;
-
-    // Search by destination
-    if (searchQuery) {
-      result = result.filter(
-        (pkg) =>
-          pkg.destination.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          pkg.destination.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          pkg.package_name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Filter by mood
-    if (selectedMoods.length > 0) {
-      result = result.filter((pkg) =>
-        selectedMoods.some((mood) => pkg.moods?.includes(mood))
-      );
-    }
-
-    // Filter by price
-    result = result.filter(
-      (pkg) => pkg.total_price >= minPrice && pkg.total_price <= maxPrice
-    );
-
-    // Filter by date
-    if (selectedDate) {
-      result = result.filter((pkg) => pkg.travel_date.startsWith(selectedDate));
-    }
-
-    setFilteredPackages(result);
-  }, [packages, searchQuery, selectedMoods, minPrice, maxPrice, selectedDate]);
-
   // Toggle mood filter
   const toggleMood = (mood) => {
-    setSelectedMoods((prev) =>
-      prev.includes(mood) ? prev.filter((m) => m !== mood) : [...prev, mood]
-    );
+    setSelectedMood((prev) => (prev === mood ? '' : mood));
   };
 
   // Clear all filters
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedMoods([]);
+    setSelectedMood('');
     setMinPrice(0);
     setMaxPrice(5000);
     setSelectedDate('');
+    fetchPackages({
+      destination: undefined,
+      mood: undefined,
+      minPrice: 0,
+      maxPrice: 5000,
+      date: undefined,
+    });
   };
 
   // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
-    // Filter is applied via useEffect, just close drawer
+    fetchPackages();
     setShowFilterDrawer(false);
   };
 
@@ -136,13 +116,18 @@ const Browse = () => {
             {/* Search */}
             <form onSubmit={handleSearch} className="filter-section">
               <label>Destination</label>
-              <input
-                type="text"
-                placeholder="City or country..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="search-input"
-              />
+              <div className="search-row">
+                <input
+                  type="text"
+                  placeholder="City or country..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                <button type="submit" className="search-button">
+                  Search
+                </button>
+              </div>
             </form>
 
             {/* Mood Filter */}
@@ -152,7 +137,7 @@ const Browse = () => {
                 {MOOD_OPTIONS.map((mood) => (
                   <button
                     key={mood}
-                    className={`mood-chip ${selectedMoods.includes(mood) ? 'active' : ''}`}
+                    className={`mood-chip ${selectedMood === mood ? 'active' : ''}`}
                     onClick={() => toggleMood(mood)}
                   >
                     {mood}
@@ -210,7 +195,7 @@ const Browse = () => {
                 ⚙️ Filters
               </button>
               <span className="result-count">
-                {filteredPackages.length} package{filteredPackages.length !== 1 ? 's' : ''}
+                {packages.length} package{packages.length !== 1 ? 's' : ''}
               </span>
             </div>
 
@@ -229,7 +214,7 @@ const Browse = () => {
                   <SkeletonCard key={i} />
                 ))}
               </div>
-            ) : filteredPackages.length === 0 ? (
+            ) : packages.length === 0 ? (
               /* Empty State */
               <div className="empty-state">
                 <div className="empty-icon">📦</div>
@@ -242,7 +227,7 @@ const Browse = () => {
             ) : (
               /* Packages Grid */
               <div className="packages-grid">
-                {filteredPackages.map((pkg) => (
+                {packages.map((pkg) => (
                   <div
                     key={pkg.package_id}
                     className="package-card"
