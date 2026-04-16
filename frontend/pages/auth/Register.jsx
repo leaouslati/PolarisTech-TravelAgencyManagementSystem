@@ -65,6 +65,14 @@ const Register = () => {
   const passwordValue = watch('password', '');
   const strength = getStrength(passwordValue);
 
+  // Password requirements
+  const unmet = [];
+  if (passwordValue && passwordValue.length < 8) unmet.push('8 characters');
+  if (passwordValue && !/[A-Z]/.test(passwordValue)) unmet.push('1 uppercase');
+  if (passwordValue && !/\d/.test(passwordValue)) unmet.push('1 number');
+  if (passwordValue && !/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(passwordValue)) unmet.push('1 special character');
+  const unmetText = unmet.length > 0 ? `Missing: ${unmet.join(', ')}` : '';
+
   const onSubmit = async (data) => {
     setLoading(true);
     setServerError('');
@@ -224,7 +232,10 @@ const Register = () => {
               </div>
               <StrengthBar score={strength} />
               {errors.password && <p className="mt-1 text-xs text-red-500" role="alert">{errors.password.message}</p>}
-              {!errors.password && (
+              {!errors.password && passwordValue && unmetText && (
+                <p className="mt-1 text-xs text-red-500 dark:text-red-400">{unmetText}</p>
+              )}
+              {!errors.password && (!passwordValue || (!unmetText && strength < 4)) && (
                 <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
                   Min 8 chars, 1 uppercase, 1 number, 1 special character
                 </p>
