@@ -124,7 +124,7 @@ const getOnePackage = async (req, res) => {
 
     // Hotels linked to this package
     const [addOns] = await db.query(
-      'SELECT name, price FROM AddOns WHERE package_id = ?',
+      'SELECT addon_id, name, price FROM AddOns WHERE package_id = ?',
       [id]
     ).catch(() => [[]]);
 
