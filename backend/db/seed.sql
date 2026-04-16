@@ -3,14 +3,14 @@ USE polaris_db;
 -- Roles seeded via ENUM so no separate table needed
 
 -- Users (password for all = Test@1234)
-INSERT INTO Users (username, full_name, gender, date_of_birth, email, phone, address, password_hash, role, status) VALUES
-('john_doe', 'John Doe', 'Male', '1995-03-15', 'customer1@test.com', '+96170000001', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active'),
-('sara_ali', 'Sara Ali', 'Female', '1998-07-22', 'customer2@test.com', '+96170000002', 'Tripoli, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active'),
-('maya_kh', 'Maya Khalil', 'Female', '2000-01-10', 'customer3@test.com', '+96170000003', 'Sidon, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active'),
-('omar_hassan', 'Omar Hassan', 'Male', '1993-11-05', 'customer4@test.com', '+96170000004', 'Jounieh, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active'),
-('agent_sara', 'Sara Mansour', 'Female', '1990-05-18', 'agent1@test.com', '+96170000005', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'TravelAgent', 'Active'),
-('agent_karim', 'Karim Nassar', 'Male', '1988-09-30', 'agent2@test.com', '+96170000006', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'TravelAgent', 'Active'),
-('admin_lara', 'Lara Haddad', 'Female', '1985-04-12', 'admin@test.com', '+96170000007', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Administrator', 'Active');
+INSERT INTO Users (username, full_name, gender, date_of_birth, email, phone, address, password_hash, role, status, password_changed_at) VALUES
+('john_doe', 'John Doe', 'Male', '1995-03-15', 'customer1@test.com', '+96170000001', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active', NOW()),
+('sara_ali', 'Sara Ali', 'Female', '1998-07-22', 'customer2@test.com', '+96170000002', 'Tripoli, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active', NOW()),
+('maya_kh', 'Maya Khalil', 'Female', '2000-01-10', 'customer3@test.com', '+96170000003', 'Sidon, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active', NOW()),
+('omar_hassan', 'Omar Hassan', 'Male', '1993-11-05', 'customer4@test.com', '+96170000004', 'Jounieh, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Customer', 'Active', NOW()),
+('agent_sara', 'Sara Mansour', 'Female', '1990-05-18', 'agent1@test.com', '+96170000005', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'TravelAgent', 'Active', NOW()),
+('agent_karim', 'Karim Nassar', 'Male', '1988-09-30', 'agent2@test.com', '+96170000006', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'TravelAgent', 'Active', NOW()),
+('admin_lara', 'Lara Haddad', 'Female', '1985-04-12', 'admin@test.com', '+96170000007', 'Beirut, Lebanon', '$2b$10$ybA7MTb/lSl1Br1XupD3i.XothQT8HmVv/05barxx/1lesOOwp7ei', 'Administrator', 'Active', NOW());
 
 -- Customers extra info
 INSERT INTO Customers (customer_id, passport_number, nationality, preferences) VALUES

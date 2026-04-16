@@ -1,5 +1,18 @@
-const db = require('../config/db');
-const { notifyUser } = require('../utils/notify');
+const db = require('../db/connection');
+const notifyUser = require('../utils/notifyUser');
+
+const getDestinations = async (req, res) => {
+  try {
+    const [destinations] = await db.query(
+      'SELECT destination_id, city, country FROM Destinations ORDER BY country, city'
+    );
+    return res.status(200).json({ status: 'success', data: destinations });
+  } catch (error) {
+    console.error('getDestinations error:', error);
+    return res.status(500).json({ status: 'error', message: 'Internal server error' });
+  }
+};
+
 const getPackages = async (req, res) => {
   try {
     const agentId = req.user.user_id;
@@ -8,29 +21,52 @@ const getPackages = async (req, res) => {
       `SELECT
          tp.package_id,
          tp.package_name,
+         tp.destination_id,
          d.city        AS destination_city,
          d.country     AS destination_country,
          tp.travel_date,
+         tp.return_date,
+         tp.duration,
          tp.total_price,
+         tp.description,
          tp.available_slots,
          tp.status_availability
        FROM TravelPackages tp
        JOIN Destinations d ON tp.destination_id = d.destination_id
-       WHERE tp.staff_id = ?`,
+       WHERE tp.staff_id = ? AND tp.status_availability != 'inactive'`,
       [agentId]
     );
+
+    // Fetch moods for all packages in one query
+    const packageIds = packages.map(p => p.package_id);
+    let moodsMap = {};
+    if (packageIds.length > 0) {
+      const [moods] = await db.query(
+        `SELECT package_id, mood FROM PackageMoods WHERE package_id IN (?)`,
+        [packageIds]
+      );
+      moods.forEach(m => {
+        if (!moodsMap[m.package_id]) moodsMap[m.package_id] = [];
+        moodsMap[m.package_id].push(m.mood);
+      });
+    }
 
     const formatted = packages.map((pkg) => ({
       package_id: pkg.package_id,
       package_name: pkg.package_name,
+      destination_id: pkg.destination_id,
       destination: {
         city: pkg.destination_city,
         country: pkg.destination_country,
       },
       travel_date: pkg.travel_date,
+      return_date: pkg.return_date,
+      duration: pkg.duration,
       total_price: pkg.total_price,
+      description: pkg.description,
       available_slots: pkg.available_slots,
       status_availability: pkg.status_availability,
+      moods: moodsMap[pkg.package_id] || [],
     }));
 
     return res.status(200).json({ status: 'success', data: formatted });
@@ -104,9 +140,9 @@ const createPackage = async (req, res) => {
 
     // Insert moods if provided
     if (moods && Array.isArray(moods) && moods.length > 0) {
-      const moodRows = moods.map((mood_id) => [newPackageId, mood_id]);
+      const moodRows = moods.map((mood) => [newPackageId, mood]);
       await db.query(
-        'INSERT INTO PackageMoods (package_id, mood_id) VALUES ?',
+        'INSERT INTO PackageMoods (package_id, mood) VALUES ?',
         [moodRows]
       );
     }
@@ -154,7 +190,7 @@ const updatePackage = async (req, res) => {
     // Save proposed changes as JSON in PackageUpdateRequests
     const proposedChanges = req.body;
     await db.query(
-      `INSERT INTO PackageUpdateRequests (package_id, staff_id, proposed_changes, status)
+      `INSERT INTO PackageUpdateRequests (package_id, agent_id, updated_data, status)
        VALUES (?, ?, ?, 'pending')`,
       [packageId, agentId, JSON.stringify(proposedChanges)]
     );
@@ -166,11 +202,15 @@ const updatePackage = async (req, res) => {
     );
 
     // Notify admin
-    await notifyUser(
-      null, // admin — use your system's method to target admin
-      `Agent ${req.user.name} submitted changes to package "${pkg.package_name}" for your review`,
-      { role: 'admin' }
+    const [admins] = await db.query(
+      "SELECT user_id FROM Users WHERE role = 'Administrator' LIMIT 1"
     );
+    if (admins.length > 0) {
+      await notifyUser(
+        admins[0].user_id,
+        `Agent ${req.user.full_name} submitted changes to package "${pkg.package_name}" for your review`
+      );
+    }
 
     return res.status(200).json({
       status: 'success',
@@ -231,19 +271,19 @@ const getBookings = async (req, res) => {
     const [bookings] = await db.query(
       `SELECT
          b.booking_id,
-         CONCAT(u.first_name, ' ', u.last_name) AS customer_name,
+         u.full_name AS customer_name,
          tp.package_name,
          tp.travel_date,
          b.num_travelers,
          b.total_price,
          b.status,
-         b.created_at,
-         GROUP_CONCAT(ao.add_on_name SEPARATOR ', ') AS add_ons
+         b.booking_date AS created_at,
+         GROUP_CONCAT(ao.name SEPARATOR ', ') AS add_ons
        FROM Bookings b
        JOIN TravelPackages tp ON b.package_id = tp.package_id
-       JOIN Users u          ON b.user_id = u.user_id
+       JOIN Users u           ON b.customer_id = u.user_id
        LEFT JOIN BookingAddOns bao ON b.booking_id = bao.booking_id
-       LEFT JOIN AddOns ao         ON bao.add_on_id = ao.add_on_id
+       LEFT JOIN AddOns ao         ON bao.addon_id = ao.addon_id
        WHERE tp.staff_id = ?
        GROUP BY b.booking_id`,
       [agentId]
@@ -286,7 +326,7 @@ const approveBooking = async (req, res) => {
     );
     const formattedId = `BK-${String(bookingId).padStart(4, '0')}`;
     await notifyUser(
-      booking.user_id,
+      booking.customer_id,
       `Your booking ${formattedId} has been approved. Please proceed to payment`
     );
 
@@ -333,7 +373,7 @@ const declineBooking = async (req, res) => {
     // Notify customer
     const formattedId = `BK-${String(bookingId).padStart(4, '0')}`;
     await notifyUser(
-      booking.user_id,
+      booking.customer_id,
       `Your booking ${formattedId} has been declined by the agent`
     );
 
@@ -345,6 +385,7 @@ const declineBooking = async (req, res) => {
 };
 
 module.exports = {
+  getDestinations,
   getPackages,
   createPackage,
   updatePackage,

@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const agentController = require('../controllers/agentController');
-const authMiddleware = require('../middleware/authMiddleware');
-const roleMiddleware = require('../middleware/roleMiddleware');
+const authMiddleware = require('../middleware/auth');
+const roleMiddleware = require('../middleware/role');
 router.use(authMiddleware);
 router.use(roleMiddleware('TravelAgent'));
+router.get('/destinations', agentController.getDestinations);
 router.get('/packages', agentController.getPackages);
 router.post('/packages', agentController.createPackage);
 router.put('/packages/:packageId', agentController.updatePackage);
