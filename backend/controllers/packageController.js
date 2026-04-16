@@ -1,6 +1,6 @@
 // controllers/packageController.js
 
-const db = require('../config/db'); 
+const db = require('../db/connection'); 
 async function getMoods(packageId) {
   const [rows] = await db.query(
     'SELECT MoodName FROM PackageMoods WHERE PackageID = ?',
