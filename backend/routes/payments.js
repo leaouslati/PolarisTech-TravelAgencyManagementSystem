@@ -6,9 +6,6 @@ const bookingController = require('../controllers/bookingController');
 
 router.use(authMiddleware);
 
-router.post('/', bookingController.createBooking);
-router.get('/my', bookingController.getMyBookings);
-router.get('/:id', bookingController.getOneBooking);
-router.post('/:id/addons', bookingController.attachAddons);
+router.post('/', bookingController.processPayment);
 
 module.exports = router;
