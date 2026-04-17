@@ -8,6 +8,9 @@ const roleMiddleware = require('../middleware/role');
 router.use(authMiddleware);
 router.use(roleMiddleware('Administrator'));
 
+/* -------------------- Stats -------------------- */
+router.get('/stats', adminController.getDashboardStats);
+
 /* -------------------- Day 1: Users -------------------- */
 router.get('/users', adminController.getAllUsers);
 router.get('/users/:userId', adminController.getOneUser);

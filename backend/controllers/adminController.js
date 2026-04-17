@@ -121,10 +121,21 @@ exports.getOneUser = async (req, res) => {
       });
     }
 
+    const [recentBookings] = await pool.query(
+      `SELECT b.booking_id, tp.package_name, d.city AS destination_city,
+              b.travel_date, b.status, b.total_price, b.booking_date AS created_at
+       FROM Bookings b
+       JOIN TravelPackages tp ON b.package_id = tp.package_id
+       JOIN Destinations d ON tp.destination_id = d.destination_id
+       WHERE b.customer_id = ?
+       ORDER BY b.booking_date DESC LIMIT 5`,
+      [userId]
+    );
+
     return res.status(200).json({
       status: 'success',
       message: 'User fetched successfully',
-      data: rows[0],
+      data: { ...rows[0], recent_bookings: recentBookings },
     });
   } catch (error) {
     console.error('getOneUser error:', error);
@@ -355,6 +366,7 @@ exports.getAllPackages = async (req, res) => {
       FROM TravelPackages tp
       INNER JOIN Users u ON tp.staff_id = u.user_id
       INNER JOIN Destinations d ON tp.destination_id = d.destination_id
+      WHERE tp.status_availability != 'inactive'
       ORDER BY tp.created_at DESC
     `;
 
@@ -599,6 +611,42 @@ exports.approvePackageUpdate = async (req, res) => {
     });
   } finally {
     if (conn) conn.release();
+  }
+};
+
+// GET /api/admin/stats
+exports.getDashboardStats = async (req, res) => {
+  try {
+    const [[users], [bookings], [revenue], [pendingUpdates], recentBookings] = await Promise.all([
+      pool.query(`SELECT COUNT(*) AS total FROM Users WHERE status != 'Deleted'`),
+      pool.query(`SELECT COUNT(*) AS total FROM Bookings`),
+      pool.query(`SELECT COALESCE(SUM(amount), 0) AS total FROM Payments WHERE payment_status = 'paid'`),
+      pool.query(`SELECT COUNT(*) AS total FROM PackageUpdateRequests WHERE status = 'pending'`),
+      pool.query(
+        `SELECT b.booking_id, u.full_name AS customer_name, tp.package_name,
+                CONCAT(d.city, ', ', d.country) AS destination,
+                b.travel_date, b.status, b.total_price, b.booking_date AS created_at
+         FROM Bookings b
+         JOIN Users u ON b.customer_id = u.user_id
+         JOIN TravelPackages tp ON b.package_id = tp.package_id
+         JOIN Destinations d ON tp.destination_id = d.destination_id
+         ORDER BY b.booking_date DESC LIMIT 5`
+      ),
+    ]);
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        total_users: Number(users[0].total),
+        total_bookings: Number(bookings[0].total),
+        total_revenue: Number(revenue[0].total),
+        pending_package_updates: Number(pendingUpdates[0].total),
+        recent_bookings: recentBookings[0],
+      },
+    });
+  } catch (error) {
+    console.error('getDashboardStats error:', error);
+    return res.status(500).json({ status: 'error', message: 'Failed to fetch stats', data: null });
   }
 };
 
