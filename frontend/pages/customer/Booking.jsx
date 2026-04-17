@@ -87,7 +87,6 @@ export default function Booking() {
     }
   };
 
-  // ─── Loading / error ────────────────────────────────────────────────────────
   if (pkgLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
@@ -101,8 +100,10 @@ export default function Booking() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-slate-600 dark:text-slate-400 mb-4">{pkgError}</p>
-          <button onClick={() => navigate('/customer/browse')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+          <button
+            onClick={() => navigate('/customer/browse')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
             Back to Browse
           </button>
         </div>
@@ -110,7 +111,6 @@ export default function Booking() {
     );
   }
 
-  // ─── Success screen ──────────────────────────────────────────────────────────
   if (successData) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4 py-12">
@@ -120,33 +120,73 @@ export default function Booking() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Booking Submitted!</h2>
+
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">
+            Booking Submitted
+          </h2>
+
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-            Your booking is pending agent approval. You will be notified once it's confirmed.
+            Your booking is pending agent approval.
           </p>
-          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 px-5 py-4 mb-6">
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Booking ID</p>
-            <p className="text-lg font-bold text-blue-600 dark:text-blue-400 font-mono">{successData.booking_id}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">Total Paid</p>
-            <p className="text-base font-semibold text-slate-800 dark:text-slate-100">${Number(successData.total_price).toLocaleString()}</p>
+
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 px-5 py-4 mb-6 text-left space-y-2">
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Booking ID</p>
+              <p className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono">
+                {successData.booking_id}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Package</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                {pkg.package_name}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Travel Date</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                {travelDate}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Total Price</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                ${Number(successData.total_price).toLocaleString()}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Status</p>
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                Pending agent approval
+              </p>
+            </div>
           </div>
+
+          <button
+            onClick={() => navigate(`/customer/payment/${successData.booking_id}`)}
+            className="block w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors mb-3"
+          >
+            Proceed to Payment
+          </button>
+
           <Link
             to="/customer/bookings"
-            className="block w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
-            View My Bookings
+            Go to My Bookings
           </Link>
         </div>
       </div>
     );
   }
 
-  // ─── Wizard ──────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16 py-8">
-
-        {/* Page header */}
         <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
@@ -164,12 +204,8 @@ export default function Booking() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* Left — Wizard */}
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-
-              {/* Progress steps */}
               <div className="flex items-center gap-2 mb-8">
                 {STEPS.map((label, i) => {
                   const num = i + 1;
@@ -178,12 +214,16 @@ export default function Booking() {
                   return (
                     <div key={num} className="flex items-center gap-2 flex-1 min-w-0">
                       <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
-                        ${done  ? 'bg-green-500 text-white' :
-                          active ? 'bg-blue-600 text-white' :
-                                   'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}>
-                        {done
-                          ? <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                          : num}
+                        ${done
+                          ? 'bg-green-500 text-white'
+                          : active
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}>
+                        {done ? (
+                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : num}
                       </div>
                       <span className={`text-sm truncate ${active ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>
                         {label}
@@ -196,7 +236,6 @@ export default function Booking() {
                 })}
               </div>
 
-              {/* Step 1 — Travel Details */}
               {step === 1 && (
                 <div className="space-y-5">
                   <div>
@@ -241,7 +280,6 @@ export default function Booking() {
                 </div>
               )}
 
-              {/* Step 2 — Add-ons */}
               {step === 2 && (
                 <div className="space-y-4">
                   {addons.length === 0 ? (
@@ -297,7 +335,6 @@ export default function Booking() {
                 </div>
               )}
 
-              {/* Step 3 — Review & Confirm */}
               {step === 3 && (
                 <div className="space-y-5">
                   <div className="space-y-3">
@@ -357,7 +394,6 @@ export default function Booking() {
             </div>
           </div>
 
-          {/* Right — Package summary card */}
           <div className="lg:col-span-1">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 sticky top-6">
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
@@ -399,7 +435,6 @@ export default function Booking() {
               )}
             </div>
           </div>
-
         </div>
       </div>
     </div>
