@@ -55,7 +55,7 @@ const Wishlist = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="max-w-screen-2xl mx-auto px-6 py-10">
+      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16 py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold text-slate-800 dark:text-slate-100 text-left">My Wishlist</h1>
