@@ -16,6 +16,7 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/agent', require('./routes/agent'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/notifications', require('./routes/notifications'));
 
 // Health check
 app.get('/', (req, res) => res.json({ message: 'PolarisTech API running' }));
