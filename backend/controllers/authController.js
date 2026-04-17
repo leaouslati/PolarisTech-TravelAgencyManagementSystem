@@ -72,7 +72,7 @@ const register = async (req, res) => {
   }
 };
 
-// ─── Login ───────────────────────────────────────────────────────────────────
+// ─── Login (Step 1 — password check, issue MFA OTP) ──────────────────────────
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -85,6 +85,14 @@ const login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
+    }
+
+    if (user.status === 'Deleted') {
+      return res.status(401).json({ status: 'error', message: 'Invalid email or password' });
+    }
+
+    if (user.status === 'Suspended') {
+      return res.status(403).json({ status: 'error', message: 'Your account has been suspended. Please contact support.' });
     }
 
     // Check if account is locked
@@ -130,7 +138,7 @@ const login = async (req, res) => {
       [user.user_id]
     );
 
-    // Check password expiry (90 days) — skip if never explicitly set
+    // Check password expiry (90 days)
     if (user.password_changed_at) {
       const ageInDays =
         (Date.now() - new Date(user.password_changed_at).getTime()) / (1000 * 60 * 60 * 24);
@@ -141,6 +149,62 @@ const login = async (req, res) => {
         });
       }
     }
+
+    // MFA: generate OTP, email it, do NOT issue JWT yet
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query(
+      'UPDATE Users SET otp_code = ?, otp_expires_at = ? WHERE user_id = ?',
+      [otp, otpExpiry, user.user_id]
+    );
+
+    console.log(`[MFA OTP] ${email} → ${otp}`);
+
+    await sendEmail(
+      email,
+      'PolarisTech – Login Verification Code',
+      `<p>Hi ${user.full_name},</p>
+       <p>Your one-time login verification code is:</p>
+       <h2 style="letter-spacing:4px">${otp}</h2>
+       <p>This code expires in <strong>10 minutes</strong>. Do not share it with anyone.</p>
+       <p>If you did not attempt to log in, please change your password immediately.</p>`
+    );
+
+    return res.status(200).json({
+      status: 'mfa_required',
+      message: 'A verification code has been sent to your email.',
+      data: { email }
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    return res.status(500).json({ status: 'error', message: 'Something went wrong' });
+  }
+};
+
+// ─── Verify MFA (Step 2 — validate OTP, issue JWT) ───────────────────────────
+const verifyMfa = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ status: 'error', message: 'Email and verification code are required' });
+  }
+
+  try {
+    const [[user]] = await pool.query(
+      'SELECT * FROM Users WHERE email = ? AND otp_code = ?',
+      [email, otp.trim()]
+    );
+
+    if (!user || !user.otp_expires_at || new Date() > new Date(user.otp_expires_at)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid or expired verification code' });
+    }
+
+    // Clear OTP after successful verification
+    await pool.query(
+      'UPDATE Users SET otp_code = NULL, otp_expires_at = NULL WHERE user_id = ?',
+      [user.user_id]
+    );
 
     const token = jwt.sign(
       { user_id: user.user_id, email: user.email, role: user.role, username: user.username },
@@ -156,12 +220,13 @@ const login = async (req, res) => {
           user_id: user.user_id,
           username: user.username,
           email: user.email,
-          role: user.role
+          role: user.role,
+          full_name: user.full_name
         }
       }
     });
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('Verify MFA error:', err);
     return res.status(500).json({ status: 'error', message: 'Something went wrong' });
   }
 };
@@ -298,4 +363,82 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, forgotPassword, verifyOtp, resetPassword };
+// ─── Get Profile ─────────────────────────────────────────────────────────────
+const getProfile = async (req, res) => {
+  try {
+    const [[user]] = await pool.query(
+      `SELECT user_id, full_name, username, email, phone, address, gender,
+              date_of_birth, role, status, created_at
+       FROM Users WHERE user_id = ?`,
+      [req.user.user_id]
+    );
+
+    if (!user) {
+      return res.status(404).json({ status: 'error', message: 'User not found' });
+    }
+
+    return res.status(200).json({ status: 'success', data: user });
+  } catch (err) {
+    console.error('Get profile error:', err);
+    return res.status(500).json({ status: 'error', message: 'Something went wrong' });
+  }
+};
+
+// ─── Update Profile ───────────────────────────────────────────────────────────
+const updateProfile = async (req, res) => {
+  const { username, full_name, phone, address, gender, date_of_birth, email } = req.body;
+
+  try {
+    if (email && email !== req.user.email) {
+      const [[existing]] = await pool.query(
+        'SELECT user_id FROM Users WHERE email = ? AND user_id != ?',
+        [email, req.user.user_id]
+      );
+      if (existing) {
+        return res.status(409).json({ status: 'error', message: 'Email already in use' });
+      }
+    }
+
+    if (username) {
+      const [[existing]] = await pool.query(
+        'SELECT user_id FROM Users WHERE username = ? AND user_id != ?',
+        [username, req.user.user_id]
+      );
+      if (existing) {
+        return res.status(409).json({ status: 'error', message: 'Username already taken' });
+      }
+    }
+
+    await pool.query(
+      `UPDATE Users SET
+        full_name     = COALESCE(?, full_name),
+        username      = COALESCE(?, username),
+        email         = COALESCE(?, email),
+        phone         = COALESCE(?, phone),
+        address       = COALESCE(?, address),
+        gender        = COALESCE(?, gender),
+        date_of_birth = COALESCE(?, date_of_birth)
+       WHERE user_id = ?`,
+      [full_name || null, username || null, email || null, phone || null,
+       address || null, gender || null, date_of_birth || null, req.user.user_id]
+    );
+
+    const [[updated]] = await pool.query(
+      `SELECT user_id, full_name, username, email, phone, address, gender,
+              date_of_birth, role, status, created_at
+       FROM Users WHERE user_id = ?`,
+      [req.user.user_id]
+    );
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Profile updated successfully',
+      data: updated
+    });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    return res.status(500).json({ status: 'error', message: 'Something went wrong' });
+  }
+};
+
+module.exports = { register, login, verifyMfa, forgotPassword, verifyOtp, resetPassword, getProfile, updateProfile };
