@@ -301,7 +301,7 @@ const addToWishlist = async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.status(200).json({ status: 'success', message: 'Already in your wishlist' });
+      return res.status(200).json({ status: 'success', message: 'Already in your wishlist — do not insert a duplicate' });
     }
 
     // Insert new
@@ -343,7 +343,8 @@ const getWishlist = async (req, res) => {
        FROM Wishlists w
        JOIN TravelPackages tp ON w.package_id = tp.package_id
        JOIN Destinations d ON tp.destination_id = d.destination_id
-       WHERE w.user_id = ?`,
+       WHERE w.user_id = ?
+       ORDER BY w.created_at DESC`,
       [user_id]
     );
 
@@ -363,7 +364,7 @@ const getWishlist = async (req, res) => {
       }))
     );
 
-    return res.status(200).json({ status: 'success', data: result });
+    return res.status(200).json({ status: 'success', message: 'Wishlist fetched successfully', data: result });
   } catch (err) {
     console.error('getWishlist error:', err);
     return res.status(500).json({ status: 'error', message: 'Server error' });

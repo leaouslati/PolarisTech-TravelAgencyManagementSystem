@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import { Heart } from 'lucide-react';
 
 const formatDate = (d) => {
   if (!d) return '';
@@ -56,9 +57,9 @@ const Wishlist = () => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <div className="max-w-screen-2xl mx-auto px-6 py-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-100">My Wishlist</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Saved packages for later</p>
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold text-slate-800 dark:text-slate-100 text-left">My Wishlist</h1>
+          <p className="text-base text-slate-500 dark:text-slate-400 mt-2 text-left">Saved packages for later</p>
         </div>
 
         {error && (
@@ -82,96 +83,43 @@ const Wishlist = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+          <div className="flex flex-wrap gap-6">
             {packages.map(pkg => (
               <div
                 key={pkg.package_id}
-                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden hover:-translate-y-1 hover:shadow-md transition-all duration-200 relative"
+                className="flex bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden relative w-full max-w-md md:w-96"
               >
-                {/* Remove button */}
+                {/* Heart/Unheart button (always visible) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFromWishlist(pkg.package_id);
                   }}
-                  className="absolute top-3 right-3 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-3 right-3 p-1.5 bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 rounded-full shadow border border-slate-200 dark:border-slate-600"
+                  title="Remove from wishlist"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <Heart size={20} color="currentColor" />
                 </button>
 
-                {/* Image area */}
+                {/* Left: Image section (as before) */}
                 <div
                   onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
-                  className="h-44 bg-linear-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center cursor-pointer group"
+                  className="flex items-center justify-center w-32 h-32 bg-blue-100 dark:bg-blue-900/30 rounded-l-xl cursor-pointer"
                 >
                   <span className="text-2xl font-bold text-blue-500 dark:text-slate-300">
                     {pkg.destination.city}
                   </span>
-                  {/* Heart icon for remove */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      removeFromWishlist(pkg.package_id);
-                    }}
-                    className="absolute top-3 right-3 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full opacity-100 transition-opacity"
-                  >
-                    <svg className="h-4 w-4" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                  </button>
                 </div>
 
+                {/* Right: Name and cost */}
                 <div
                   onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
-                  className="p-4 cursor-pointer"
+                  className="flex flex-col justify-center flex-1 px-6 py-4 cursor-pointer"
                 >
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-                      {pkg.package_name}
-                    </h3>
-                    <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                      pkg.available_slots > 5
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
-                        : pkg.available_slots > 0
-                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400'
-                          : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'
-                    }`}>
-                      {pkg.available_slots} slots
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-                    {pkg.destination.city}, {pkg.destination.country}
-                  </p>
-
-                  {pkg.moods?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {pkg.moods.map(mood => (
-                        <span
-                          key={mood}
-                          className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800"
-                        >
-                          {mood}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Date + duration row */}
-                  <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                    <span className="flex items-center gap-1">
-                      <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {formatDate(pkg.travel_date)}
-                    </span>
-                    <span className="text-slate-300 dark:text-slate-600">·</span>
-                    <span>{pkg.duration} days</span>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
-                    <span className="text-xs text-slate-400 dark:text-slate-500">per person</span>
+                  <h3 className="font-semibold text-xl text-slate-800 dark:text-slate-100 mb-2">
+                    {pkg.package_name}
+                  </h3>
+                  <div className="flex items-center gap-3">
                     <span className="text-base font-bold text-blue-600 dark:text-blue-400">
                       ${pkg.total_price.toLocaleString()}
                     </span>

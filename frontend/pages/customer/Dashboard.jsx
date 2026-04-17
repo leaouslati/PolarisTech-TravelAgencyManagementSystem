@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
+import { Search, CalendarCheck, Heart } from 'lucide-react';
 
 const formatDate = (d) => {
   if (!d) return '';
@@ -11,9 +13,37 @@ const formatDate = (d) => {
   });
 };
 
-const CustomerDashboard = () => {
-  const navigate = useNavigate();
+const navCards = [
+  {
+    title: 'Browse Packages',
+    description: 'Explore all available travel packages',
+    icon: Search,
+    path: '/customer/browse',
+  },
+  {
+    title: 'My Bookings',
+    description: 'View and manage your bookings',
+    icon: CalendarCheck,
+    path: '/customer/bookings',
+  },
+  {
+    title: 'My Wishlist',
+    description: 'Saved packages for later',
+    icon: Heart,
+    path: '/customer/wishlist',
+  },
+];
+
+const cardColorMap = {
+  blue:   'border-l-4 border-l-blue-500',
+  yellow: 'border-l-4 border-l-yellow-500',
+  red:    'border-l-4 border-l-red-500',
+  green:  'border-l-4 border-l-green-500',
+};
+
+export default function CustomerDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +55,7 @@ const CustomerDashboard = () => {
         setLoading(true);
         const res = await api.get(`/packages/recommendations/${user.user_id}`);
         if (res.data.status === 'success') {
-          setRecommendations(res.data.data.slice(0, 4)); // Up to 4
+          setRecommendations(res.data.data.slice(0, 4));
         }
       } catch (err) {
         setError('Failed to load recommendations');
@@ -33,86 +63,54 @@ const CustomerDashboard = () => {
         setLoading(false);
       }
     };
-
     fetchRecommendations();
   }, [user]);
 
-  const navCards = [
-    {
-      title: 'Browse Packages',
-      description: 'Explore all available travel packages',
-      icon: (
-        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      ),
-      path: '/customer/browse',
-    },
-    {
-      title: 'My Bookings',
-      description: 'View and manage your bookings',
-      icon: (
-        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-        </svg>
-      ),
-      path: '/customer/bookings',
-    },
-    {
-      title: 'My Wishlist',
-      description: 'Saved packages for later',
-      icon: (
-        <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-        </svg>
-      ),
-      path: '/customer/wishlist',
-    },
-  ];
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-      <div className="max-w-screen-2xl mx-auto px-6 py-10">
-        {/* Welcome */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Welcome back, {user?.full_name || 'Customer'}!
+      <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16 py-8">
+        {/* Hero Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold text-black dark:text-white">
+            Welcome back, {user?.full_name || 'Customer'}
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400">
-            Ready to plan your next adventure?
-          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1.5">Ready to plan your next adventure?</p>
         </div>
 
         {/* Quick Navigation */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
-          {navCards.map((card, idx) => (
-            <div
-              key={idx}
-              onClick={() => navigate(card.path)}
-              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200"
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 rounded-lg">
-                  {card.icon}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-1">
-                    {card.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {card.description}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="mb-8">
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Quick Navigation</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+     {navCards.map(({ title, description, icon: Icon, path }) => (
+  <div
+    key={path}
+    onClick={() => navigate(path)}
+    className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5
+               hover:bg-blue-50 dark:hover:bg-slate-700 hover:border-blue-200 dark:hover:border-slate-600
+               transition-all duration-200 group cursor-pointer"
+  >
+    <div className="mb-3 w-fit p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40">
+      <Icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+    </div>
+
+    <p className="text-[1.08rem] font-semibold text-slate-800 dark:text-slate-100">
+      {title}
+    </p>
+    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+      {description}
+    </p>
+  </div>
+))}
+          </div>
         </div>
+
+
 
         {/* Recommendations */}
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-6">
+          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
             Recommended for You
-          </h2>
+          </p>
 
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
@@ -147,7 +145,7 @@ const CustomerDashboard = () => {
                 <div
                   key={pkg.package_id}
                   onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
-                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200"
+                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer"
                 >
                   {/* Image area */}
                   <div className="h-44 bg-linear-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
@@ -215,6 +213,4 @@ const CustomerDashboard = () => {
       </div>
     </div>
   );
-};
-
-export default CustomerDashboard;
+}

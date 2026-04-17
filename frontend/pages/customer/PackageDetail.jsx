@@ -130,7 +130,7 @@ const PackageDetail = () => {
           <div className="space-y-3">
             {pkg.tours.map((tour, idx) => (
               <details key={idx} className="group">
-                <summary className="cursor-pointer flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors">
+                <summary className="cursor-pointer flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/40 rounded-lg">
                   <span className="font-medium text-slate-800 dark:text-slate-100">{tour.tour_name}</span>
                   <svg className="h-5 w-5 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -152,7 +152,7 @@ const PackageDetail = () => {
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Hotels</h2>
             <div className="space-y-3">
               {pkg.hotels.map((hotel, idx) => (
-                <div key={idx} className="border-b border-slate-100 dark:border-slate-700 pb-3 last:border-0">
+                <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
                   <h3 className="font-medium text-slate-800 dark:text-slate-100">{hotel.hotel_name}</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">Room: {hotel.room_types}</p>
                   <p className="text-sm text-slate-600 dark:text-slate-400">Rating: {hotel.rating}/5</p>
@@ -165,7 +165,7 @@ const PackageDetail = () => {
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Flights</h2>
             <div className="space-y-3">
               {pkg.flights.map((flight, idx) => (
-                <div key={idx} className="border-b border-slate-100 dark:border-slate-700 pb-3 last:border-0">
+                <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
                   <h3 className="font-medium text-slate-800 dark:text-slate-100">{flight.airline_name}</h3>
                   <p className="text-sm text-slate-600 dark:text-slate-400">
                     {flight.departure_location} → {flight.arrival_location}
@@ -182,15 +182,16 @@ const PackageDetail = () => {
 
         {/* Add-ons */}
         {pkg.add_ons && pkg.add_ons.length > 0 && (
-          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Available Add-ons</h2>
-            <div className="space-y-2">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-0 mb-6 overflow-hidden">
+            <div className="bg-blue-50 dark:bg-blue-900/40 px-6 py-3 rounded-t-xl">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-100 uppercase tracking-wide m-0">Available Add-ons</h2>
+            </div>
+            <div className="space-y-2 px-6 py-4">
               {pkg.add_ons.map((addon) => (
-                <label key={addon.addon_id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <input type="checkbox" className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500" />
+                <div key={addon.addon_id} className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/40 rounded-lg">
                   <span className="text-slate-800 dark:text-slate-100">{addon.name}</span>
                   <span className="ml-auto text-blue-600 dark:text-blue-400 font-medium">${addon.price}</span>
-                </label>
+                </div>
               ))}
             </div>
           </div>

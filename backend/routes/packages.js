@@ -13,11 +13,12 @@ const roleMiddleware = require('../middleware/role');
 
 router.get('/', getAllPackages);
 router.get('/recommendations/:userId', getRecommendations);
-router.get('/:id', getOnePackage);
 
-// Wishlist routes
+// ✅ Wishlist routes FIRST
+router.get('/wishlist', authMiddleware, getWishlist);
 router.post('/wishlist', authMiddleware, roleMiddleware('Customer'), addToWishlist);
 router.delete('/wishlist/:packageId', authMiddleware, removeFromWishlist);
-router.get('/wishlist', authMiddleware, getWishlist);
 
+// ❗ Dynamic route LAST
+router.get('/:id', getOnePackage);
 module.exports = router;
