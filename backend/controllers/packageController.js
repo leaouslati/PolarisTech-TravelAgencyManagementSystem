@@ -289,4 +289,85 @@ const getRecommendations = async (req, res) => {
   }
 };
 
-module.exports = { getAllPackages, getOnePackage, getRecommendations };
+const addToWishlist = async (req, res) => {
+  try {
+    const { package_id } = req.body;
+    const user_id = req.user.user_id;
+
+    // Check if already in wishlist
+    const [existing] = await db.query(
+      'SELECT * FROM Wishlists WHERE user_id = ? AND package_id = ?',
+      [user_id, package_id]
+    );
+
+    if (existing.length > 0) {
+      return res.status(200).json({ status: 'success', message: 'Already in your wishlist' });
+    }
+
+    // Insert new
+    await db.query(
+      'INSERT INTO Wishlists (user_id, package_id) VALUES (?, ?)',
+      [user_id, package_id]
+    );
+
+    return res.status(201).json({ status: 'success', message: 'Package saved to wishlist' });
+  } catch (err) {
+    console.error('addToWishlist error:', err);
+    return res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
+
+const removeFromWishlist = async (req, res) => {
+  try {
+    const { packageId } = req.params;
+    const user_id = req.user.user_id;
+
+    await db.query(
+      'DELETE FROM Wishlists WHERE user_id = ? AND package_id = ?',
+      [user_id, packageId]
+    );
+
+    return res.status(200).json({ status: 'success', message: 'Package removed from wishlist' });
+  } catch (err) {
+    console.error('removeFromWishlist error:', err);
+    return res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
+
+const getWishlist = async (req, res) => {
+  try {
+    const user_id = req.user.user_id;
+
+    const [wishlistRows] = await db.query(
+      `SELECT tp.package_id, tp.package_name, d.city, d.country, tp.travel_date, tp.return_date, tp.duration, tp.total_price, tp.available_slots, tp.status_availability
+       FROM Wishlists w
+       JOIN TravelPackages tp ON w.package_id = tp.package_id
+       JOIN Destinations d ON tp.destination_id = d.destination_id
+       WHERE w.user_id = ?`,
+      [user_id]
+    );
+
+    // Attach moods
+    const result = await Promise.all(
+      wishlistRows.map(async (pkg) => ({
+        package_id: pkg.package_id,
+        package_name: pkg.package_name,
+        destination: { city: pkg.city, country: pkg.country },
+        travel_date: pkg.travel_date,
+        return_date: pkg.return_date,
+        duration: pkg.duration,
+        total_price: pkg.total_price,
+        available_slots: pkg.available_slots,
+        status_availability: pkg.status_availability,
+        moods: await getMoods(pkg.package_id),
+      }))
+    );
+
+    return res.status(200).json({ status: 'success', data: result });
+  } catch (err) {
+    console.error('getWishlist error:', err);
+    return res.status(500).json({ status: 'error', message: 'Server error' });
+  }
+};
+
+module.exports = { getAllPackages, getOnePackage, getRecommendations, addToWishlist, removeFromWishlist, getWishlist };
