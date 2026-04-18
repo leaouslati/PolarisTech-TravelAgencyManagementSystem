@@ -13,16 +13,16 @@ const formatDate = (d) => {
 };
 
 const SkeletonCard = () => (
-  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-pulse">
-    <div className="h-44 bg-slate-200 dark:bg-slate-700" />
-    <div className="p-4 space-y-3">
+  <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-pulse flex flex-col">
+    <div className="h-44 bg-slate-200 dark:bg-slate-700 shrink-0" />
+    <div className="p-4 flex flex-col flex-1 space-y-3">
       <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4" />
       <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-1/2" />
       <div className="flex gap-2">
         <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
         <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
       </div>
-      <div className="flex justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+      <div className="flex justify-between pt-2 mt-auto border-t border-slate-100 dark:border-slate-700">
         <div className="h-4 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
         <div className="h-4 w-16 bg-slate-200 dark:bg-slate-700 rounded" />
       </div>
@@ -250,22 +250,23 @@ const Browse = () => {
 
             ) : (
 
-              /* Package grid */
+              /* Package grid — flex flex-col on each card ensures equal height structure */
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
                 {packages.map(pkg => (
                   <div
                     key={pkg.package_id}
                     onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
-                    className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200"
+                    className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200 flex flex-col"
                   >
-                    {/* Image area */}
-                    <div className="h-44 bg-linear-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
+                    {/* Image area — fixed height, never shrinks */}
+                    <div className="h-44 bg-linear-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center shrink-0">
                       <span className="text-2xl font-bold text-blue-500 dark:text-slate-300">
                         {pkg.destination.city}
                       </span>
                     </div>
 
-                    <div className="p-4">
+                    {/* Content — grows to fill remaining card height */}
+                    <div className="p-4 flex flex-col flex-1">
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                           {pkg.package_name}
@@ -280,36 +281,40 @@ const Browse = () => {
                           {pkg.available_slots} slots
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
                         {pkg.destination.city}, {pkg.destination.country}
                       </p>
 
-                      {pkg.moods?.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {pkg.moods.map(mood => (
-                            <span
-                              key={mood}
-                              className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800"
-                            >
-                              {mood}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                      {/* Middle section grows — moods + date pushed to just above separator */}
+                      <div className="flex-1 flex flex-col justify-end gap-2">
+                        {pkg.moods?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {pkg.moods.map(mood => (
+                              <span
+                                key={mood}
+                                className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800"
+                              >
+                                {mood}
+                              </span>
+                            ))}
+                          </div>
+                        )}
 
-                      {/* Date + duration row */}
-                      <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                        <span className="flex items-center gap-1">
-                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {formatDate(pkg.travel_date)}
-                        </span>
-                        <span className="text-slate-300 dark:text-slate-600">·</span>
-                        <span>{pkg.duration} days</span>
+                        {/* Date + duration row */}
+                        <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="flex items-center gap-1">
+                            <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {formatDate(pkg.travel_date)}
+                          </span>
+                          <span className="text-slate-300 dark:text-slate-600">·</span>
+                          <span>{pkg.duration} days</span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
+                      {/* Separator + price — always at the bottom of every card */}
+                      <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-100 dark:border-slate-700">
                         <span className="text-xs text-slate-400 dark:text-slate-500">per person</span>
                         <span className="text-base font-bold text-blue-600 dark:text-blue-400">
                           ${pkg.total_price.toLocaleString()}
