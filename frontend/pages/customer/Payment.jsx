@@ -55,7 +55,10 @@ export default function Payment() {
 
       setSuccessData(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Payment failed. Please check your card details and try again.');
+      setError(
+        err.response?.data?.message ||
+          'Payment failed. Please check your card details and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -71,7 +74,7 @@ export default function Payment() {
             </svg>
           </div>
 
-          <h1 className="mb-2 text-xl font-bold text-slate-800 dark:text-slate-100">
+          <h1 className="mb-2 text-xl font-bold text-green-600 dark:text-green-400">
             Payment Successful
           </h1>
 
@@ -81,7 +84,7 @@ export default function Payment() {
 
           <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 px-5 py-4 mb-6">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Transaction ID</p>
-            <p className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono">
+            <p className="text-base font-bold text-green-600 dark:text-green-400 font-mono">
               {successData.transaction_id}
             </p>
           </div>
