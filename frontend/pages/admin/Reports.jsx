@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import api from '../../api/axios';
 
+const formatCurrency = (num) =>
+  new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(num || 0); 
+
+  
 export default function Reports() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
