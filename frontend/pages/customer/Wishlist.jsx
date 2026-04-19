@@ -73,8 +73,8 @@ const Wishlist = () => {
             <svg className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
-            <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">No saved packages yet</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Start exploring and save your favorite packages.</p>
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">You haven't saved any packages yet.</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Browse our packages and save your favorites here.</p>
             <button
               onClick={() => navigate('/customer/browse')}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
