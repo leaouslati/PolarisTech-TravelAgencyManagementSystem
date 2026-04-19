@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axios';
 
-// Helper — format sent_at as a readable time string
 const formatTime = (ts) => {
   if (!ts) return '';
   const d = new Date(ts);
@@ -21,12 +20,12 @@ export default function Messages() {
   const bottomRef  = useRef(null);
   const inputRef   = useRef(null);
 
-  // Get current user id from localStorage (set on login)
-  const currentUserId = Number(localStorage.getItem('user_id'));
+  // AuthContext stores the user object as JSON under the 'user' key
+  const currentUserId = Number(JSON.parse(localStorage.getItem('user') || '{}')?.user_id);
 
   // Load messages on mount
   useEffect(() => {
-    axios.get(`/api/agent/messages/${bookingId}`)
+    api.get(`/agent/messages/${bookingId}`)
       .then(res => setMessages(res.data.data ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -43,7 +42,7 @@ export default function Messages() {
 
     setSending(true);
     try {
-      const res = await axios.post(`/api/agent/messages/${bookingId}`, { content: text });
+      const res = await api.post(`/agent/messages/${bookingId}`, { content: text });
       const newMsg = res.data.data;
       setMessages(prev => [...prev, newMsg]);
       setContent('');

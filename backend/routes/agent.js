@@ -8,6 +8,20 @@ const agentController = require('../controllers/agentController');
 router.use(authMiddleware);
 router.use(roleMiddleware('TravelAgent'));
 
+// Package routes
+router.get('/packages', agentController.getAgentPackages);
+router.post('/packages', agentController.createPackage);
+router.put('/packages/:id', agentController.updatePackage);
+router.delete('/packages/:id', agentController.deletePackage);
+
+// Destinations (for package form dropdown)
+router.get('/destinations', agentController.getDestinations);
+
+// Booking routes
+router.get('/bookings', agentController.getAgentBookings);
+router.patch('/bookings/:bookingId/approve', agentController.approveBooking);
+router.patch('/bookings/:bookingId/decline', agentController.declineBooking);
+
 // Cancellation routes
 router.get('/cancellations', agentController.getCancellationRequests);
 router.patch('/cancellations/:cancelId/approve', agentController.approveCancellation);
