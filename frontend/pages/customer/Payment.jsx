@@ -55,10 +55,17 @@ export default function Payment() {
 
       setSuccessData(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Payment failed. Please check your card details and try again.');
+      setError(
+        err.response?.data?.message ||
+          'Payment failed. Please check your card details and try again.'
+      );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTryAgain = () => {
+    setError('');
   };
 
   if (successData) {
@@ -71,7 +78,7 @@ export default function Payment() {
             </svg>
           </div>
 
-          <h1 className="mb-2 text-xl font-bold text-slate-800 dark:text-slate-100">
+          <h1 className="mb-2 text-xl font-bold text-green-600 dark:text-green-400">
             Payment Successful
           </h1>
 
@@ -81,7 +88,7 @@ export default function Payment() {
 
           <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-600 px-5 py-4 mb-6">
             <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Transaction ID</p>
-            <p className="text-base font-bold text-blue-600 dark:text-blue-400 font-mono">
+            <p className="text-base font-bold text-green-600 dark:text-green-400 font-mono">
               {successData.transaction_id}
             </p>
           </div>
@@ -108,6 +115,26 @@ export default function Payment() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
             Booking ID: {bookingId}
           </p>
+
+          {error && (
+            <div className="mb-5 space-y-3">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
+                Payment failed. Please check your card details and try again.
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm px-4 py-3 rounded-lg">
+                Your booking is still pending. No charge was made.
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTryAgain}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-sm rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -151,12 +178,6 @@ export default function Payment() {
                 placeholder="123"
               />
             </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
 
             <button
               type="submit"
