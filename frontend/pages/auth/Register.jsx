@@ -57,6 +57,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [emailServerError, setEmailServerError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -76,6 +77,7 @@ const Register = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     setServerError('');
+    setEmailServerError('');
     try {
       await api.post('/auth/register', {
         full_name: data.full_name,
@@ -87,7 +89,12 @@ const Register = () => {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 4000);
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
+      if (err.response?.status === 409 && msg.includes('email')) {
+        setEmailServerError(msg);
+      } else {
+        setServerError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -154,7 +161,7 @@ const Register = () => {
                 className={errors.full_name ? inputError : inputBase}
                 {...register('full_name', { required: 'Full name is required' })}
               />
-              {errors.full_name && <p className="mt-1 text-xs text-red-500" role="alert">{errors.full_name.message}</p>}
+              {errors.full_name && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.full_name.message}</p>}
             </div>
 
             {/* Username */}
@@ -173,7 +180,7 @@ const Register = () => {
                   pattern: { value: /^[a-zA-Z0-9_]+$/, message: 'Only letters, numbers and underscores' }
                 })}
               />
-              {errors.username && <p className="mt-1 text-xs text-red-500" role="alert">{errors.username.message}</p>}
+              {errors.username && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.username.message}</p>}
             </div>
 
             {/* Email */}
@@ -184,14 +191,17 @@ const Register = () => {
                 type="email"
                 placeholder="you@example.com"
                 aria-label="Email address"
-                aria-invalid={!!errors.email}
-                className={errors.email ? inputError : inputBase}
+                aria-invalid={!!(errors.email || emailServerError)}
+                className={(errors.email || emailServerError) ? inputError : inputBase}
                 {...register('email', {
                   required: 'Email is required',
                   pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: 'Enter a valid email' }
                 })}
               />
-              {errors.email && <p className="mt-1 text-xs text-red-500" role="alert">{errors.email.message}</p>}
+              {errors.email && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.email.message}</p>}
+              {!errors.email && emailServerError && (
+                <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{emailServerError}</p>
+              )}
             </div>
 
             {/* Phone */}
@@ -206,7 +216,7 @@ const Register = () => {
                 className={errors.phone ? inputError : inputBase}
                 {...register('phone', { required: 'Phone number is required' })}
               />
-              {errors.phone && <p className="mt-1 text-xs text-red-500" role="alert">{errors.phone.message}</p>}
+              {errors.phone && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.phone.message}</p>}
             </div>
 
             {/* Password */}
@@ -231,7 +241,7 @@ const Register = () => {
                 </button>
               </div>
               <StrengthBar score={strength} />
-              {errors.password && <p className="mt-1 text-xs text-red-500" role="alert">{errors.password.message}</p>}
+              {errors.password && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.password.message}</p>}
               {!errors.password && passwordValue && unmetText && (
                 <p className="mt-1 text-xs text-red-500 dark:text-red-400">{unmetText}</p>
               )}
@@ -263,7 +273,7 @@ const Register = () => {
                   <EyeIcon visible={showConfirm} />
                 </button>
               </div>
-              {errors.confirmPassword && <p className="mt-1 text-xs text-red-500" role="alert">{errors.confirmPassword.message}</p>}
+              {errors.confirmPassword && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{errors.confirmPassword.message}</p>}
             </div>
 
             {/* Server error */}
@@ -289,7 +299,7 @@ const Register = () => {
           {/* Footer */}
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
+            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
               Sign in
             </Link>
           </p>

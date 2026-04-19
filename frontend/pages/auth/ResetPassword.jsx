@@ -53,6 +53,7 @@ const ResetPassword = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [passwordReuseError, setPasswordReuseError] = useState('');
   const [confirmError, setConfirmError] = useState('');
   const [success, setSuccess] = useState(false);
 
@@ -68,6 +69,7 @@ const ResetPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setServerError('');
+    setPasswordReuseError('');
     setConfirmError('');
 
     if (!allMet) {
@@ -88,7 +90,12 @@ const ResetPassword = () => {
       setSuccess(true);
       setTimeout(() => navigate('/login'), 2500);
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      const msg = err.response?.data?.message || 'Something went wrong. Please try again.';
+      if (msg.toLowerCase().includes('reuse') || msg.toLowerCase().includes('last 5')) {
+        setPasswordReuseError(msg);
+      } else {
+        setServerError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -159,11 +166,15 @@ const ResetPassword = () => {
                   placeholder="••••••••"
                   aria-label="New password"
                   value={password}
-                  onChange={e => { setPassword(e.target.value); setServerError(''); }}
+                  onChange={e => { setPassword(e.target.value); setServerError(''); setPasswordReuseError(''); }}
                   className={`${inputBase} pr-11`}
                 />
                 <EyeButton show={showPassword} onToggle={() => setShowPassword(v => !v)} label={showPassword ? 'Hide password' : 'Show password'} />
               </div>
+
+              {passwordReuseError && (
+                <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{passwordReuseError}</p>
+              )}
 
               {/* Live checklist */}
               {password.length > 0 && (
@@ -206,8 +217,8 @@ const ResetPassword = () => {
             <button
               type="submit"
               disabled={loading || success}
-              aria-label="Reset password"
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="Reset my password"
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2"><Spinner /> Resetting…</span>
@@ -216,7 +227,7 @@ const ResetPassword = () => {
           </form>
 
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
+            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
               ← Back to login
             </Link>
           </p>

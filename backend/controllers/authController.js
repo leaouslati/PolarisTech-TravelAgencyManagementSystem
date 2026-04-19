@@ -28,7 +28,7 @@ const register = async (req, res) => {
       'SELECT user_id FROM Users WHERE email = ?', [email]
     );
     if (emailRow) {
-      return res.status(409).json({ status: 'error', message: 'Email already in use' });
+      return res.status(409).json({ status: 'error', message: 'This email is already registered. Try logging in instead.' });
     }
 
     const [[usernameRow]] = await pool.query(
@@ -101,7 +101,7 @@ const login = async (req, res) => {
       return res.status(403).json({
         status: 'locked',
         message: `Account locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}.`,
-        data: { minutes_remaining: minutesLeft }
+        data: { minutes_remaining: minutesLeft, lock_until: user.lock_until }
       });
     }
 
@@ -216,6 +216,7 @@ const verifyMfa = async (req, res) => {
 
     return res.status(200).json({
       status: 'success',
+      message: 'Verification successful',
       data: {
         token,
         user: {
@@ -339,7 +340,7 @@ const resetPassword = async (req, res) => {
       if (reused) {
         return res.status(400).json({
           status: 'error',
-          message: 'You cannot reuse a recent password'
+          message: 'You cannot reuse one of your last 5 passwords. Please choose a different one.'
         });
       }
     }
@@ -379,7 +380,7 @@ const getProfile = async (req, res) => {
       return res.status(404).json({ status: 'error', message: 'User not found' });
     }
 
-    return res.status(200).json({ status: 'success', data: user });
+    return res.status(200).json({ status: 'success', message: 'Profile retrieved successfully', data: user });
   } catch (err) {
     console.error('Get profile error:', err);
     return res.status(500).json({ status: 'error', message: 'Something went wrong' });

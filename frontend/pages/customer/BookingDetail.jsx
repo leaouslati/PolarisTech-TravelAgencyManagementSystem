@@ -152,10 +152,18 @@ export default function BookingDetail() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-red-500 dark:text-red-400 text-sm mb-4">{error || 'Booking not found'}</p>
-          <button onClick={() => navigate(-1)} className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
-            ← Go back
-          </button>
+          <p className="text-red-500 dark:text-red-400 text-sm mb-2" role="alert" aria-live="polite">
+            {error || 'Booking not found'}
+          </p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">
+            The booking you're looking for doesn't exist or you don't have access to it.
+          </p>
+          <Link
+            to="/customer/bookings"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+          >
+            ← Back to My Bookings
+          </Link>
         </div>
       </div>
     );

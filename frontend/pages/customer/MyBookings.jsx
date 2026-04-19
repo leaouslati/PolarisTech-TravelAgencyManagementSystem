@@ -132,7 +132,7 @@ export default function MyBookings() {
         </div>
 
         {pageError && (
-          <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
+          <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg" role="alert" aria-live="polite">
             {pageError}
           </div>
         )}
@@ -248,9 +248,11 @@ export default function MyBookings() {
                   <button
                     type="submit"
                     disabled={actionLoading}
-                    className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                    aria-label="Save booking changes"
+                    className="flex items-center gap-2 px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {actionLoading ? 'Saving…' : 'Save'}
+                    {actionLoading && <Spinner />}
+                    {actionLoading ? 'Saving…' : 'Save Changes'}
                   </button>
                   <button
                     type="button"
@@ -297,8 +299,10 @@ export default function MyBookings() {
                 type="button"
                 onClick={handleCancel}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+                aria-label="Confirm cancellation of this booking"
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               >
+                {actionLoading && <Spinner />}
                 {actionLoading ? 'Submitting…' : 'Yes, Cancel Booking'}
               </button>
             </div>

@@ -38,6 +38,7 @@ const OTP = () => {
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [otpError, setOtpError] = useState('');
   const [verifyLoading, setVerifyLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
 
   const [timeLeft, setTimeLeft] = useState(TIMER_SECONDS);
   const inputRefs = useRef([]);
@@ -131,12 +132,15 @@ const OTP = () => {
     setSendError('');
     setOtpError('');
     setOtpDigits(['', '', '', '', '', '']);
+    setResendLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
       setTimeLeft(TIMER_SECONDS);
       inputRefs.current[0]?.focus();
     } catch {
       setSendError('Failed to resend OTP. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -189,7 +193,7 @@ const OTP = () => {
                   onChange={e => { setEmail(e.target.value); setEmailError(''); }}
                   className={emailError ? inputError : inputBase}
                 />
-                {emailError && <p className="mt-1 text-xs text-red-500" role="alert">{emailError}</p>}
+                {emailError && <p className="mt-1 text-xs text-red-500" role="alert" aria-live="polite">{emailError}</p>}
               </div>
 
               {sendError && (
@@ -201,8 +205,8 @@ const OTP = () => {
               <button
                 type="submit"
                 disabled={sendLoading}
-                aria-label="Send OTP"
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send verification code"
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {sendLoading ? (
                   <span className="flex items-center justify-center gap-2"><Spinner /> Sending…</span>
@@ -252,40 +256,46 @@ const OTP = () => {
                     </span>
                   </p>
                 ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-red-500">Code expired.</p>
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      className="text-sm text-blue-600 dark:text-blue-400 font-medium hover:underline"
-                    >
-                      Resend code
-                    </button>
-                  </div>
+                  <p className="text-sm text-red-500" role="alert" aria-live="polite">Your code has expired. Please request a new one.</p>
                 )}
               </div>
 
               {sendError && (
-                <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg" role="alert">
+                <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg" role="alert" aria-live="polite">
                   {sendError}
                 </div>
               )}
 
-              <button
-                type="submit"
-                disabled={verifyLoading || timeLeft === 0}
-                aria-label="Verify OTP"
-                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {verifyLoading ? (
-                  <span className="flex items-center justify-center gap-2"><Spinner /> Verifying…</span>
-                ) : 'Verify Code'}
-              </button>
+              {timeLeft > 0 ? (
+                <button
+                  type="submit"
+                  disabled={verifyLoading}
+                  aria-label="Verify OTP code"
+                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {verifyLoading ? (
+                    <span className="flex items-center justify-center gap-2"><Spinner /> Verifying…</span>
+                  ) : 'Verify Code'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendLoading}
+                  aria-label="Resend OTP code"
+                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {resendLoading ? (
+                    <span className="flex items-center justify-center gap-2"><Spinner /> Sending…</span>
+                  ) : 'Resend OTP'}
+                </button>
+              )}
 
               <button
                 type="button"
+                aria-label="Change email address"
                 onClick={() => { setStep(1); setOtpDigits(['', '', '', '', '', '']); setOtpError(''); }}
-                className="w-full px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-colors duration-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:border-slate-700"
+                className="w-full px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg border border-slate-200 transition-colors duration-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Change email
               </button>
@@ -294,7 +304,7 @@ const OTP = () => {
 
           {/* Back to login */}
           <p className="mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
+            <Link to="/login" className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
               ← Back to login
             </Link>
           </p>
