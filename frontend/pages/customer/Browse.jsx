@@ -234,7 +234,7 @@ const Browse = () => {
             {/* Loading skeleton */}
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
-                {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+                {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : packages.length === 0 ? (
 
