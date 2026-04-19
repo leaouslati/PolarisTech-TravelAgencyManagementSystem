@@ -217,8 +217,12 @@ exports.approveBooking = async (req, res) => {
        WHERE b.booking_id = ? AND tp.staff_id = ?`,
       [bookingId, agentId]
     );
-    if (rows.length === 0) return res.status(404).json({ message: 'Booking not found' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
+    if (rows.length === 0)
+      return res.status(404).json({ message: 'Booking not found' });
+
+    // Guard: prevent double-processing
+    if (rows[0].status === 'confirmed' || rows[0].status === 'cancelled')
+      return res.status(400).json({ status: 'error', message: 'This booking has already been processed' });
 
     await db.query('UPDATE Bookings SET status = "confirmed" WHERE booking_id = ?', [bookingId]);
     await notifyUser(rows[0].customer_id, `Your booking ${bookingId} has been approved by your travel agent`);
@@ -244,8 +248,12 @@ exports.declineBooking = async (req, res) => {
        WHERE b.booking_id = ? AND tp.staff_id = ?`,
       [bookingId, agentId]
     );
-    if (rows.length === 0) return res.status(404).json({ message: 'Booking not found' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
+    if (rows.length === 0)
+      return res.status(404).json({ message: 'Booking not found' });
+
+    // Guard: prevent double-processing
+    if (rows[0].status === 'confirmed' || rows[0].status === 'cancelled')
+      return res.status(400).json({ status: 'error', message: 'This booking has already been processed' });
 
     await db.query('UPDATE Bookings SET status = "cancelled" WHERE booking_id = ?', [bookingId]);
     await db.query(
@@ -305,10 +313,18 @@ exports.approveCancellation = async (req, res) => {
       'SELECT * FROM CancellationRequests WHERE cancel_id = ? FOR UPDATE',
       [cancelId]
     );
-    if (rows.length === 0) { await conn.rollback(); return res.status(404).json({ message: 'Not found' }); }
+    if (rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Not found' });
+    }
 
     const c = rows[0];
-    if (c.status !== 'pending') { await conn.rollback(); return res.status(400).json({ message: 'Already reviewed' }); }
+
+    // Guard: prevent double-processing
+    if (c.status === 'approved' || c.status === 'rejected') {
+      await conn.rollback();
+      return res.status(400).json({ status: 'error', message: 'This cancellation request has already been reviewed' });
+    }
 
     await conn.query('UPDATE CancellationRequests SET status = "approved" WHERE cancel_id = ?', [cancelId]);
     await conn.query('UPDATE Bookings SET status = "cancelled" WHERE booking_id = ?', [c.booking_id]);
