@@ -32,6 +32,7 @@ const SkeletonCard = () => (
 
 const FilterPanel = ({
   searchInput, onSearchInput, onSearch,
+  minPrice, onMinPrice,
   maxPrice, onMaxPrice,
   selectedDate, onDate, onClear,
 }) => (
@@ -55,6 +56,24 @@ const FilterPanel = ({
         Search
       </button>
     </form>
+
+    {/* Min Budget */}
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        Min Budget:{' '}
+        <span className="text-blue-600 dark:text-blue-400 font-semibold">
+          ${minPrice.toLocaleString()}
+        </span>
+      </label>
+      <input
+        type="range" min={0} max={5000} step={100} value={minPrice}
+        onChange={e => onMinPrice(Number(e.target.value))}
+        className="w-full accent-blue-600"
+      />
+      <div className="flex justify-between text-xs text-slate-400">
+        <span>$0</span><span>$5,000</span>
+      </div>
+    </div>
 
     {/* Max Budget */}
     <div className="space-y-2">
@@ -107,6 +126,7 @@ const Browse = () => {
   const [searchInput, setSearchInput] = useState('');
   const [destination, setDestination] = useState('');
   const [selectedMood, setSelectedMood] = useState('');
+  const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(5000);
   const [selectedDate, setSelectedDate] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -128,10 +148,11 @@ const Browse = () => {
     fetchPackages({
       destination: destination || undefined,
       mood: selectedMood || undefined,
+      minPrice: minPrice || undefined,
       maxPrice,
       date: selectedDate || undefined,
     });
-  }, [destination, selectedMood, maxPrice, selectedDate, fetchPackages]);
+  }, [destination, selectedMood, minPrice, maxPrice, selectedDate, fetchPackages]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -143,6 +164,7 @@ const Browse = () => {
     setSearchInput('');
     setDestination('');
     setSelectedMood('');
+    setMinPrice(0);
     setMaxPrice(5000);
     setSelectedDate('');
   };
@@ -151,6 +173,8 @@ const Browse = () => {
     searchInput,
     onSearchInput: setSearchInput,
     onSearch: handleSearch,
+    minPrice,
+    onMinPrice: setMinPrice,
     maxPrice,
     onMaxPrice: setMaxPrice,
     selectedDate,
@@ -174,6 +198,7 @@ const Browse = () => {
             <button
               key={mood}
               onClick={() => setSelectedMood(prev => prev === mood ? '' : mood)}
+              aria-pressed={selectedMood === mood}
               className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors duration-200
                 ${selectedMood === mood
                   ? 'bg-blue-600 text-white border-blue-600'
@@ -218,7 +243,7 @@ const Browse = () => {
               <div className="mb-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg flex items-center justify-between">
                 <span>{error}</span>
                 <button
-                  onClick={() => fetchPackages({ destination: destination || undefined, mood: selectedMood || undefined, maxPrice, date: selectedDate || undefined })}
+                  onClick={() => fetchPackages({ destination: destination || undefined, mood: selectedMood || undefined, minPrice: minPrice || undefined, maxPrice, date: selectedDate || undefined })}
                   className="text-xs font-medium underline ml-4 whitespace-nowrap"
                 >
                   Try again
@@ -228,7 +253,7 @@ const Browse = () => {
 
             {/* Loading skeleton */}
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : packages.length === 0 ? (
@@ -251,11 +276,12 @@ const Browse = () => {
             ) : (
 
               /* Package grid — flex flex-col on each card ensures equal height structure */
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {packages.map(pkg => (
                   <div
                     key={pkg.package_id}
                     onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
+                    aria-label={`View ${pkg.package_name} Package, $${pkg.total_price}, ${pkg.duration} days`}
                     className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200 flex flex-col"
                   >
                     {/* Image area — fixed height, never shrinks */}
@@ -333,7 +359,7 @@ const Browse = () => {
       {drawerOpen && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDrawerOpen(false)} />
-          <div className="fixed inset-y-0 right-0 w-80 max-w-full bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 z-50 p-6 overflow-y-auto shadow-xl">
+          <div className="fixed lg:inset-y-0 lg:right-0 lg:w-80 lg:max-w-full lg:border-l bottom-0 left-0 right-0 h-3/4 lg:h-auto bg-white dark:bg-slate-800 border-t lg:border-t-0 border-slate-200 dark:border-slate-700 z-50 p-6 overflow-y-auto shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Filters
