@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 const MOOD_OPTIONS = ['Adventure', 'Relaxation', 'Cultural', 'Family', 'Romantic'];
 
@@ -117,9 +118,13 @@ const Browse = () => {
       setError(null);
       const res = await api.get('/packages', { params });
       if (res.data.status === 'success') setPackages(res.data.data);
-    } catch {
+      } catch {
       setError('Failed to load packages. Please try again.');
-    } finally {
+      toast.error('Failed to load packages. Please try again.', {
+        duration: 5000,
+        position: 'top-right',
+      });
+      } finally {
       setLoading(false);
     }
   }, []);
@@ -350,7 +355,9 @@ const Browse = () => {
             <FilterPanel {...filterProps} />
           </div>
         </>
-      )}
+            )}
+
+      <Toaster />
     </div>
   );
 };
