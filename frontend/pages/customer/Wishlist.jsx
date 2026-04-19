@@ -95,6 +95,7 @@ const Wishlist = () => {
                     e.stopPropagation();
                     removeFromWishlist(pkg.package_id);
                   }}
+                  aria-label="Remove from wishlist"
                   className="absolute top-3 right-3 p-1.5 bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 rounded-full shadow border border-slate-200 dark:border-slate-600"
                   title="Remove from wishlist"
                 >

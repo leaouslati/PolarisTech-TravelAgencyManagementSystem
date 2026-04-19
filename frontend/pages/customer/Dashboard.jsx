@@ -137,7 +137,13 @@ export default function CustomerDashboard() {
             </div>
           ) : recommendations.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-slate-600 dark:text-slate-400">No recommendations available yet.</p>
+              <p className="text-slate-600 dark:text-slate-400 mb-4">No recommendations available yet.</p>
+              <button
+                onClick={() => navigate('/customer/browse')}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Browse Packages
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">

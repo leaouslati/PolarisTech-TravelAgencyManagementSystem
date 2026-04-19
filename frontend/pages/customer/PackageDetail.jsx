@@ -202,6 +202,7 @@ const PackageDetail = () => {
           <button
             onClick={toggleWishlist}
             disabled={wishlistLoading}
+            aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
             className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors ${
               isInWishlist
                 ? 'bg-red-600 hover:bg-red-700 text-white'
