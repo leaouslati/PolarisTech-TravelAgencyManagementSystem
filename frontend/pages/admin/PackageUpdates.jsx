@@ -39,9 +39,15 @@ function DiffRow({ label, oldValue, newValue }) {
 
 function UpdateCard({ update, onApprove, onReject, processing }) {
   const [expanded, setExpanded] = useState(false);
+  
   const proposed = typeof update.updated_data === 'string'
-    ? JSON.parse(update.updated_data)
-    : update.updated_data;
+  ? JSON.parse(update.updated_data)
+  : update.updated_data;
+
+const current = typeof update.current_data === 'string'
+  ? JSON.parse(update.current_data)
+  : update.current_data || {};
+  
   const changedFields = Object.keys(proposed).filter(k => FIELD_LABELS[k]);
 
   return (
