@@ -76,7 +76,7 @@ const getAllPackages = async (req, res) => {
       }))
     );
 
-    return res.status(200).json({ status: 'success', data: result });
+    return res.status(200).json({ status: 'success', message: 'Packages fetched successfully', data: result });
   } catch (err) {
     console.error('getAllPackages error:', err);
     return res.status(500).json({ status: 'error', message: 'Server error' });
