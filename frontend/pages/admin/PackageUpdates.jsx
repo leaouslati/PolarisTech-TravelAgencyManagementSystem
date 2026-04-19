@@ -13,11 +13,26 @@ const FIELD_LABELS = {
   available_slots: 'Available Slots',
 };
 
-function DiffRow({ label, proposed }) {
+function DiffRow({ label, oldValue, newValue }) {
+  const changed = oldValue !== newValue;
+
   return (
     <tr className="border-b border-slate-50 dark:border-slate-700/50">
-      <td className="py-2 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap w-40">{label}</td>
-      <td className="py-2 px-4 text-sm text-blue-700 dark:text-blue-300 font-medium">{String(proposed)}</td>
+      <td className="py-2 px-4 text-xs font-semibold text-slate-500 uppercase">{label}</td>
+
+      <td className="py-2 px-4 text-sm bg-slate-100 dark:bg-slate-700">
+        {String(oldValue ?? '-')}
+      </td>
+
+      <td
+        className={`py-2 px-4 text-sm font-medium ${
+          changed
+            ? 'bg-yellow-200 dark:bg-yellow-900/40'
+            : 'bg-blue-100 dark:bg-blue-900/40'
+        }`}
+      >
+        {String(newValue)}
+      </td>
     </tr>
   );
 }
