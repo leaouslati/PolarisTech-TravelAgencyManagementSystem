@@ -636,6 +636,7 @@ exports.getDashboardStats = async (req, res) => {
 
     return res.status(200).json({
       status: 'success',
+      message: 'Dashboard stats fetched successfully',
       data: {
         total_users: Number(users[0].total),
         total_bookings: Number(bookings[0].total),
