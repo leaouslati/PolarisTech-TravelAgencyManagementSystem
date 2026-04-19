@@ -31,6 +31,96 @@ const Section = ({ title, children }) => (
   </div>
 );
 
+// Timeline step config
+const TIMELINE_STEPS = [
+  { key: 'submitted',    label: 'Submitted',     description: 'Booking received' },
+  { key: 'agent_review', label: 'Agent Review',  description: 'Under review' },
+  { key: 'confirmed',    label: 'Confirmed',     description: 'Booking confirmed' },
+  { key: 'travel',       label: 'Travel',        description: 'Trip in progress' },
+];
+
+function getActiveStep(booking) {
+  if (!booking) return 0;
+  const travelDate = booking.travel_date ? new Date(booking.travel_date) : null;
+  const travelPassed = travelDate && travelDate <= new Date();
+
+  if (booking.status === 'cancelled') return 1; // stays at agent review
+  if (travelPassed && booking.status === 'confirmed') return 3;
+  if (booking.status === 'confirmed') return 2;
+  return 1; // pending / modified
+}
+
+function BookingTimeline({ booking }) {
+  const activeStep = getActiveStep(booking);
+  const isCancelled = booking?.status === 'cancelled';
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm mb-4">
+      <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700">
+        <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Booking Status</h2>
+      </div>
+      <div className="px-5 py-5">
+        {isCancelled ? (
+          <div className="flex items-center gap-3 text-sm text-red-600 dark:text-red-400">
+            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            This booking has been cancelled.
+          </div>
+        ) : (
+          <div className="flex items-start gap-0">
+            {TIMELINE_STEPS.map((step, i) => {
+              const done    = i <= activeStep;
+              const current = i === activeStep;
+              const isLast  = i === TIMELINE_STEPS.length - 1;
+
+              return (
+                <div key={step.key} className="flex-1 flex flex-col items-center">
+                  {/* connector row */}
+                  <div className="flex items-center w-full">
+                    {/* left line */}
+                    <div className={`flex-1 h-0.5 ${i === 0 ? 'invisible' : done ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                    {/* dot */}
+                    <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors
+                      ${done
+                        ? current
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'bg-blue-500 border-blue-500'
+                        : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600'
+                      }`}
+                    >
+                      {done && !current ? (
+                        <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : current ? (
+                        <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                      ) : (
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      )}
+                    </div>
+                    {/* right line */}
+                    <div className={`flex-1 h-0.5 ${isLast ? 'invisible' : done && i < activeStep ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                  </div>
+                  {/* label */}
+                  <div className="mt-2 text-center px-1">
+                    <p className={`text-xs font-semibold ${done ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}>
+                      {step.label}
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 hidden sm:block">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function BookingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -72,6 +162,8 @@ export default function BookingDetail() {
   }
 
   const addonsTotal = (booking.addons || []).reduce((sum, a) => sum + Number(a.price), 0);
+  // First successful payment's transaction_id
+  const paidPayment = (booking.payments || []).find(p => p.payment_status === 'paid');
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -136,13 +228,24 @@ export default function BookingDetail() {
               ${Number(booking.total_price).toLocaleString()}
             </span>
           </div>
-          <div className="flex justify-between py-2.5">
+          <div className="flex justify-between py-2.5 border-b border-slate-100 dark:border-slate-700 last:border-0">
             <span className="text-sm text-slate-500 dark:text-slate-400">Payment Status</span>
             <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${paymentBadgeClass(booking.payment_status)}`}>
               {(booking.payment_status || 'unpaid').charAt(0).toUpperCase() + (booking.payment_status || 'unpaid').slice(1)}
             </span>
           </div>
+          {paidPayment && (
+            <div className="flex justify-between py-2.5">
+              <span className="text-sm text-slate-500 dark:text-slate-400">Transaction ID</span>
+              <span className="text-sm font-semibold text-green-600 dark:text-green-400 font-mono">
+                {paidPayment.transaction_id}
+              </span>
+            </div>
+          )}
         </Section>
+
+        {/* Timeline */}
+        <BookingTimeline booking={booking} />
 
         {/* Actions */}
         <div className="flex flex-wrap gap-3 mt-2">
