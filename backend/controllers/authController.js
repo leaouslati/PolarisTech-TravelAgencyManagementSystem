@@ -97,9 +97,11 @@ const login = async (req, res) => {
 
     // Check if account is locked
     if (user.is_locked && user.lock_until && new Date() < new Date(user.lock_until)) {
+      const minutesLeft = Math.ceil((new Date(user.lock_until) - Date.now()) / 60000);
       return res.status(403).json({
-        status: 'error',
-        message: 'Account locked. Try again after 15 minutes'
+        status: 'locked',
+        message: `Account locked. Try again in ${minutesLeft} minute${minutesLeft !== 1 ? 's' : ''}.`,
+        data: { minutes_remaining: minutesLeft }
       });
     }
 

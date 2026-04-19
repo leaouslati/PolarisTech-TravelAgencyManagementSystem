@@ -30,6 +30,7 @@ const Login = () => {
   // Step 1 state
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [lockoutMinutes, setLockoutMinutes] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
 
@@ -46,6 +47,7 @@ const Login = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     setServerError('');
+    setLockoutMinutes(null);
     try {
       const res = await api.post('/auth/login', data);
 
@@ -64,10 +66,12 @@ const Login = () => {
       login(user, token);
       redirectByRole(user.role);
     } catch (err) {
-      if (err.response?.status === 401) {
-        setFailedAttempts(prev => prev + 1);
+      if (err.response?.data?.status === 'locked') {
+        setLockoutMinutes(err.response.data.data?.minutes_remaining ?? 15);
+      } else {
+        if (err.response?.status === 401) setFailedAttempts(prev => prev + 1);
+        setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');
       }
-      setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -287,8 +291,25 @@ const Login = () => {
                 </div>
               )}
 
+              {/* Lockout banner */}
+              {lockoutMinutes !== null && (
+                <div
+                  className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  <svg className="h-4 w-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  <span>
+                    Account locked due to too many failed attempts. Try again in{' '}
+                    <strong>{lockoutMinutes} minute{lockoutMinutes !== 1 ? 's' : ''}</strong>.
+                  </span>
+                </div>
+              )}
+
               {/* Server error */}
-              {serverError && (
+              {serverError && !lockoutMinutes && (
                 <div
                   className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl"
                   role="alert"
