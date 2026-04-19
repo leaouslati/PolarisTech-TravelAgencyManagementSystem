@@ -1,4 +1,6 @@
 -- Drop and recreate for a clean run (dev only — never run this on production).
+CREATE INDEX idx_packages_price ON TravelPackages(total_price);
+CREATE INDEX idx_moods_mood ON PackageMoods(mood);
 DROP DATABASE IF EXISTS polaris_db;
 CREATE DATABASE polaris_db;
 USE polaris_db;
