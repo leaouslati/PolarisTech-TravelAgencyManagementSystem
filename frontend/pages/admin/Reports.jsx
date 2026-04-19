@@ -35,7 +35,7 @@ export default function Reports() {
       return 'Both start date and end date are required.';
     }
     if (new Date(startDate) > new Date(endDate)) {
-      return 'Start date cannot be after end date.';
+      return 'End date must be after start date.';
     }
     return '';
   };
@@ -151,7 +151,7 @@ export default function Reports() {
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
               <SummaryCard
                 title="Total Revenue"
-                value={`$${totalRevenue.toLocaleString()}`}
+                value={totalRevenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                 color="green"
               />
               <SummaryCard
@@ -221,7 +221,7 @@ export default function Reports() {
                             {row.booking_count}
                           </td>
                           <td className="py-3 px-4 text-sm font-semibold text-slate-800 dark:text-slate-100 text-right">
-                            ${revenue.toLocaleString()}
+                            {revenue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
                           </td>
                           <td className="py-3 px-4 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -248,7 +248,7 @@ export default function Reports() {
 
         {noData && (
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-12 text-center text-sm text-slate-400 dark:text-slate-500">
-            No data found for this date range
+            No revenue data found for this period.
           </div>
         )}
       </div>

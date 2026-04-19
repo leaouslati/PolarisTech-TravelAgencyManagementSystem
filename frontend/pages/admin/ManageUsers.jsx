@@ -17,21 +17,43 @@ const statusColors = {
 const selectCls =
   'px-4 py-2.5 text-sm text-slate-800 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600';
 
-function ConfirmModal({
-  title,
-  message,
-  error,
-  onConfirm,
-  onCancel,
-  danger = false,
-  loading = false,
-}) {
+function DeactivateModal({ user, error, onConfirm, onCancel, loading = false }) {
+  const hasActiveBookings = Number(user.active_booking_count || 0) > 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-6">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">{title}</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">{message}</p>
-        {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-4">Deactivate User</h3>
+
+        <div className="mb-4 space-y-1">
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{user.full_name}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Role: <span className="font-medium text-slate-700 dark:text-slate-200">{user.role}</span>
+          </p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            This user has{' '}
+            <span className="font-medium text-slate-700 dark:text-slate-200">
+              {user.active_booking_count}
+            </span>{' '}
+            active booking{Number(user.active_booking_count) !== 1 ? 's' : ''}.
+          </p>
+        </div>
+
+        {hasActiveBookings ? (
+          <div className="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+            This user cannot be deactivated while they have active bookings.
+          </div>
+        ) : (
+          <div className="mb-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 px-4 py-3 text-sm text-yellow-800 dark:text-yellow-300">
+            This action will deactivate the account. The user will no longer be able to log in.
+          </div>
+        )}
+
+        {error && (
+          <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>
+        )}
+
         <div className="flex gap-3 justify-end">
           <button
             onClick={onCancel}
@@ -41,14 +63,10 @@ function ConfirmModal({
           </button>
           <button
             onClick={onConfirm}
-            disabled={loading}
-            className={`px-4 py-2 text-sm font-semibold text-white rounded-lg transition ${
-              danger
-                ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
-                : 'bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400'
-            }`}
+            disabled={loading || hasActiveBookings}
+            className="px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-red-300 dark:disabled:bg-red-900/40 disabled:cursor-not-allowed transition"
           >
-            {loading ? 'Processing...' : 'Confirm'}
+            {loading ? 'Deactivating...' : 'Deactivate Account'}
           </button>
         </div>
       </div>
@@ -346,11 +364,9 @@ export default function ManageUsers() {
       )}
 
       {deleteTarget && (
-        <ConfirmModal
-          title="Deactivate User"
-          message={`Are you sure you want to deactivate ${deleteTarget.full_name}?`}
+        <DeactivateModal
+          user={deleteTarget}
           error={deleteError}
-          danger
           loading={deleteLoading}
           onConfirm={handleDelete}
           onCancel={() => {

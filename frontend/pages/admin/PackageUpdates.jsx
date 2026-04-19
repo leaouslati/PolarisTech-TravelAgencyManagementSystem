@@ -21,15 +21,16 @@ function formatValue(value) {
 }
 
 function ComparisonRow({ label, currentValue, proposedValue }) {
+  const changed = formatValue(currentValue) !== formatValue(proposedValue);
   return (
     <tr className="border-b border-slate-50 dark:border-slate-700/50">
       <td className="py-2 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide whitespace-nowrap w-44">
         {label}
       </td>
-      <td className="py-2 px-4 text-sm text-slate-600 dark:text-slate-300">
+      <td className="py-2 px-4 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/30">
         {formatValue(currentValue)}
       </td>
-      <td className="py-2 px-4 text-sm text-blue-700 dark:text-blue-300 font-medium">
+      <td className={`py-2 px-4 text-sm font-medium ${changed ? 'bg-yellow-50 dark:bg-yellow-900/20 text-blue-700 dark:text-blue-300' : 'text-slate-600 dark:text-slate-300'}`}>
         {formatValue(proposedValue)}
       </td>
     </tr>
@@ -42,6 +43,7 @@ function UpdateCard({
   onApprove,
   onReject,
   processing,
+  inlineError,
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -99,14 +101,14 @@ function UpdateCard({
           <div className="overflow-x-auto">
             <table className="w-full min-w-[800px]">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-700">
-                  <th className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide py-2 px-4 text-left w-44">
+                <tr className="border-b border-slate-100 dark:border-slate-700">
+                  <th className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide py-2 px-4 text-left w-44 bg-slate-50 dark:bg-slate-900/50">
                     Field
                   </th>
-                  <th className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide py-2 px-4 text-left">
+                  <th className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide py-2 px-4 text-left bg-slate-100 dark:bg-slate-900/60">
                     Current Value
                   </th>
-                  <th className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide py-2 px-4 text-left">
+                  <th className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide py-2 px-4 text-left bg-blue-50 dark:bg-blue-900/20">
                     Proposed Value
                   </th>
                 </tr>
@@ -127,6 +129,11 @@ function UpdateCard({
         </div>
       )}
 
+      {inlineError && (
+        <div className="mx-5 mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+          {inlineError}
+        </div>
+      )}
       <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30">
         <button
           onClick={() => onReject(update.update_id)}
@@ -154,6 +161,7 @@ export default function PackageUpdates() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState('');
   const [toast, setToast] = useState({ msg: '', type: '' });
+  const [cardErrors, setCardErrors] = useState({});
 
   const fetchUpdates = useCallback(async () => {
     setLoading(true);
@@ -205,12 +213,14 @@ export default function PackageUpdates() {
 
   const handleReject = async (updateId) => {
     setProcessing(`reject-${updateId}`);
+    setCardErrors((prev) => ({ ...prev, [updateId]: '' }));
     try {
       await api.patch(`/admin/package-updates/${updateId}/reject`);
       setUpdates((prev) => prev.filter((u) => u.update_id !== updateId));
       showToast('Package update rejected', 'success');
     } catch (e) {
-      showToast(e.response?.data?.message || 'Failed to reject update', 'error');
+      const msg = e.response?.data?.message || 'Failed to reject update';
+      setCardErrors((prev) => ({ ...prev, [updateId]: msg }));
     } finally {
       setProcessing('');
     }
@@ -251,6 +261,7 @@ export default function PackageUpdates() {
                 onApprove={handleApprove}
                 onReject={handleReject}
                 processing={processing}
+                inlineError={cardErrors[u.update_id] || ''}
               />
             ))}
           </div>
