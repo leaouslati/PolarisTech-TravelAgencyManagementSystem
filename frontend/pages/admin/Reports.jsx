@@ -7,7 +7,7 @@ const formatCurrency = (num) =>
     currency: 'USD'
   }).format(num || 0); 
 
-  
+
 export default function Reports() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -89,10 +89,10 @@ export default function Reports() {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
               {[
-                { label: 'Total Revenue', value: `$${Number(report.total_revenue).toLocaleString()}`, color: 'border-l-green-500' },
-                { label: 'Total Bookings', value: report.total_bookings.toLocaleString(), color: 'border-l-blue-500' },
-                { label: 'Confirmed', value: report.confirmed_bookings.toLocaleString(), color: 'border-l-emerald-500' },
-                { label: 'Cancelled', value: report.cancelled_bookings.toLocaleString(), color: 'border-l-red-500' },
+                { label: 'Total Revenue', value: formatCurrency(report.total_revenue), color: 'border-l-green-500' },
+                { label: 'Total Bookings', value: formatCurrency(report.total_bookings), color: 'border-l-blue-500' },
+                { label: 'Confirmed', value: formatCurrency(report.confirmed_bookings), color: 'border-l-emerald-500' },
+                { label: 'Cancelled', value: formatCurrency(report.cancelled_bookings), color: 'border-l-red-500' },
               ].map(card => (
                 <div key={card.label} className={`bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 border-l-4 ${card.color} shadow-sm p-5`}>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{card.label}</p>
