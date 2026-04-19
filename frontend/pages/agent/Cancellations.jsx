@@ -26,7 +26,7 @@ export default function Cancellations() {
   const [requests, setRequests]   = useState([]);
   const [loading, setLoading]     = useState(true);
   const [actioning, setActioning] = useState({});
-  const [search, setSearch]       = useState('');
+
 
   useEffect(() => {
     api.get('/agent/cancellations')
@@ -58,10 +58,7 @@ export default function Cancellations() {
     }
   };
 
-  const filtered = requests.filter(r =>
-    r.customer_name?.toLowerCase().includes(search.toLowerCase()) ||
-    r.package_name?.toLowerCase().includes(search.toLowerCase())
-  );
+
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -75,16 +72,7 @@ export default function Cancellations() {
           </p>
         </div>
 
-        {/* Search */}
-        <div className="mb-4">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by customer or package..."
-            className={inputClass}
-          />
-        </div>
+
 
         {/* Table Card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
@@ -95,26 +83,18 @@ export default function Cancellations() {
                 <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded" />
               ))}
             </div>
-          ) : filtered.length === 0 ? (
+          ) : requests.length === 0 ? (
             <div className="text-center py-16">
               <svg className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">
-                {search ? 'No results found.' : 'No cancellation requests'}
+                No cancellation requests
               </p>
               <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
-                {search ? '' : 'All clear — nothing to review right now'}
+                All clear — nothing to review right now
               </p>
-              {search && (
-                <button
-                  onClick={() => setSearch('')}
-                  className="mt-3 text-sm text-blue-600 dark:text-blue-400 font-medium"
-                >
-                  Clear search
-                </button>
-              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -132,7 +112,7 @@ export default function Cancellations() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
-                  {filtered.map(r => {
+                  {requests.map(r => {
                     const isPending   = r.status === 'pending';
                     const busyApprove = actioning[r.cancel_id] === 'approve';
                     const busyReject  = actioning[r.cancel_id] === 'reject';
