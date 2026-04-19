@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api/axios';
 
-// Helper — format sent_at as a readable time string
 const formatTime = (ts) => {
   if (!ts) return '';
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 export default function Messages() {
@@ -18,21 +16,19 @@ export default function Messages() {
   const [content, setContent]   = useState('');
   const [sending, setSending]   = useState(false);
 
-  const bottomRef  = useRef(null);
-  const inputRef   = useRef(null);
+  const bottomRef = useRef(null);
+  const inputRef  = useRef(null);
 
-  // Get current user id from localStorage (set on login)
-  const currentUserId = Number(localStorage.getItem('user_id'));
+  // AuthContext stores user as JSON under the 'user' key in localStorage
+  const currentUserId = Number(JSON.parse(localStorage.getItem('user') || '{}')?.user_id);
 
-  // Load messages on mount
   useEffect(() => {
-    axios.get(`/api/agent/messages/${bookingId}`)
+    api.get(`/agent/messages/${bookingId}`)
       .then(res => setMessages(res.data.data ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [bookingId]);
 
-  // Scroll to bottom whenever messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -43,9 +39,8 @@ export default function Messages() {
 
     setSending(true);
     try {
-      const res = await axios.post(`/api/agent/messages/${bookingId}`, { content: text });
-      const newMsg = res.data.data;
-      setMessages(prev => [...prev, newMsg]);
+      const res = await api.post(`/agent/messages/${bookingId}`, { content: text });
+      setMessages(prev => [...prev, res.data.data]);
       setContent('');
       inputRef.current?.focus();
     } catch (err) {
@@ -66,11 +61,11 @@ export default function Messages() {
   return (
     <div className="flex flex-col h-screen bg-slate-50 dark:bg-slate-900">
 
-      {/* ── Header ── */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 sm:px-6 py-4
                       bg-white dark:bg-slate-800
                       border-b border-slate-200 dark:border-slate-700
-                      flex-shrink-0">
+                      shrink-0">
         <button
           onClick={() => navigate(-1)}
           className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100
@@ -84,30 +79,25 @@ export default function Messages() {
         </button>
         <div>
           <h1 className="text-base font-semibold text-slate-800 dark:text-slate-100">
-            Booking BK-{String(bookingId).padStart(4, '0')}
+            Booking {bookingId}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">Conversation thread</p>
         </div>
       </div>
 
-      {/* ── Message thread ── */}
+      {/* Message thread */}
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
 
-        {/* Loading skeleton */}
         {loading && (
           <div className="space-y-3 animate-pulse">
             {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}
-              >
+              <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
                 <div className={`h-12 rounded-2xl bg-slate-200 dark:bg-slate-700 ${i % 2 === 0 ? 'w-2/3' : 'w-1/2'}`} />
               </div>
             ))}
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
             <svg className="h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,20 +109,14 @@ export default function Messages() {
           </div>
         )}
 
-        {/* Messages */}
         {!loading && messages.map((msg) => {
+          // msg.sender_id is returned by the backend; fall back to role check
           const isAgent = msg.sender_id === currentUserId || msg.sender_role === 'TravelAgent';
           return (
-            <div
-              key={msg.message_id}
-              className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}
-            >
-              {/* Sender name */}
+            <div key={msg.message_id} className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}>
               <span className="text-xs text-slate-500 dark:text-slate-400 mb-1 px-1">
                 {msg.sender_name}
               </span>
-
-              {/* Bubble */}
               <div
                 className={`max-w-[75%] sm:max-w-[60%] px-4 py-2.5 rounded-2xl shadow-sm
                   ${isAgent
@@ -140,10 +124,8 @@ export default function Messages() {
                     : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-bl-sm'
                   }`}
               >
-                <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                <p className="text-sm leading-relaxed wrap-break-word">{msg.content}</p>
               </div>
-
-              {/* Time */}
               <span className="text-xs text-slate-400 dark:text-slate-500 mt-1 px-1">
                 {formatTime(msg.sent_at)}
               </span>
@@ -151,12 +133,11 @@ export default function Messages() {
           );
         })}
 
-        {/* Scroll anchor */}
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Input bar ── */}
-      <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700
+      {/* Input bar */}
+      <div className="shrink-0 border-t border-slate-200 dark:border-slate-700
                       bg-white dark:bg-slate-800 px-4 sm:px-6 py-3">
         <div className="flex items-end gap-3 max-w-4xl mx-auto">
           <textarea
@@ -177,7 +158,7 @@ export default function Messages() {
             disabled={sending || !content.trim()}
             className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl
                        transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center gap-2 flex-shrink-0"
+                       flex items-center gap-2 shrink-0"
           >
             {sending ? (
               <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">

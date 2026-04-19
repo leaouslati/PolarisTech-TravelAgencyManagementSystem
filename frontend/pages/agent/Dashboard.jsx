@@ -17,18 +17,20 @@ const AgentDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [packagesRes, bookingsRes] = await Promise.all([
+        const [packagesRes, bookingsRes, cancellationsRes] = await Promise.all([
           api.get('/agent/packages'),
           api.get('/agent/bookings'),
+          api.get('/agent/cancellations'),
         ]);
 
         const bookings = bookingsRes.data.data;
+        const cancellations = cancellationsRes.data.data ?? [];
 
         setStats({
           totalPackages: packagesRes.data.data.length,
           pendingBookings: bookings.filter(b => b.status === 'pending').length,
           confirmedBookings: bookings.filter(b => b.status === 'confirmed').length,
-          pendingCancellations: 0,
+          pendingCancellations: cancellations.filter(c => c.status === 'pending').length,
         });
 
         setRecentBookings(bookings.slice(0, 5));
