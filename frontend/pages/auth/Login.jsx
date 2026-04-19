@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -30,7 +30,7 @@ const Login = () => {
   // Step 1 state
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [lockoutMinutes, setLockoutMinutes] = useState(null);
+  const [lockoutSeconds, setLockoutSeconds] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
 
@@ -44,10 +44,24 @@ const Login = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
+  useEffect(() => {
+    if (lockoutSeconds === null || lockoutSeconds <= 0) return;
+    const id = setInterval(() => setLockoutSeconds(s => (s <= 1 ? null : s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [lockoutSeconds]);
+
+  const formatLockout = (secs) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return m > 0
+      ? `${m} minute${m !== 1 ? 's' : ''} ${s > 0 ? `${s} second${s !== 1 ? 's' : ''}` : ''}`.trim()
+      : `${s} second${s !== 1 ? 's' : ''}`;
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     setServerError('');
-    setLockoutMinutes(null);
+    setLockoutSeconds(null);
     try {
       const res = await api.post('/auth/login', data);
 
@@ -67,7 +81,11 @@ const Login = () => {
       redirectByRole(user.role);
     } catch (err) {
       if (err.response?.data?.status === 'locked') {
-        setLockoutMinutes(err.response.data.data?.minutes_remaining ?? 15);
+        const lockUntil = err.response.data.data?.lock_until;
+        const secsLeft = lockUntil
+          ? Math.max(1, Math.ceil((new Date(lockUntil) - Date.now()) / 1000))
+          : (err.response.data.data?.minutes_remaining ?? 15) * 60;
+        setLockoutSeconds(secsLeft);
       } else {
         if (err.response?.status === 401) setFailedAttempts(prev => prev + 1);
         setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');
@@ -190,7 +208,8 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={mfaLoading}
-                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Verify login code"
+                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {mfaLoading ? (
                   <span className="flex items-center justify-center gap-2"><Spinner /> Verifying…</span>
@@ -199,8 +218,9 @@ const Login = () => {
 
               <button
                 type="button"
+                aria-label="Back to password entry"
                 onClick={() => { setMfaRequired(false); setOtpDigits(['', '', '', '', '', '']); setOtpError(''); }}
-                className="w-full px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition"
+                className="w-full px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 ← Back
               </button>
@@ -292,7 +312,7 @@ const Login = () => {
               )}
 
               {/* Lockout banner */}
-              {lockoutMinutes !== null && (
+              {lockoutSeconds !== null && (
                 <div
                   className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-4 py-3 rounded-xl"
                   role="alert"
@@ -303,13 +323,13 @@ const Login = () => {
                   </svg>
                   <span>
                     Account locked due to too many failed attempts. Try again in{' '}
-                    <strong>{lockoutMinutes} minute{lockoutMinutes !== 1 ? 's' : ''}</strong>.
+                    <strong>{formatLockout(lockoutSeconds)}</strong>.
                   </span>
                 </div>
               )}
 
               {/* Server error */}
-              {serverError && !lockoutMinutes && (
+              {serverError && !lockoutSeconds && (
                 <div
                   className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-xl"
                   role="alert"
@@ -322,8 +342,8 @@ const Login = () => {
               <button
                 type="submit"
                 disabled={loading}
-                aria-label="Sign in"
-                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-1"
+                aria-label="Sign in to your account"
+                className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 mt-1"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -338,13 +358,13 @@ const Login = () => {
           {!mfaRequired && (
             <div className="mt-6 space-y-2 text-center">
               <div>
-                <Link to="/otp" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                <Link to="/otp" className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                   Forgot password?
                 </Link>
               </div>
               <p className="text-sm text-slate-500 dark:text-[#7B98C4]">
                 Don't have an account?{' '}
-                <Link to="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:underline">
+                <Link to="/register" className="text-blue-600 dark:text-blue-400 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded">
                   Register
                 </Link>
               </p>
