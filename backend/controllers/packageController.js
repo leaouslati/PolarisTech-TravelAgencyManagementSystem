@@ -157,6 +157,7 @@ const getOnePackage = async (req, res) => {
 
     return res.status(200).json({
       status: 'success',
+      message: 'Package fetched successfully',
       data: {
         package_id: pkg.package_id,
         package_name: pkg.package_name,
