@@ -77,6 +77,8 @@ export default function Booking() {
   };
 
   const handleConfirmBooking = async () => {
+    if (loading) return;
+
     try {
       setLoading(true);
       setSubmitError('');
@@ -359,6 +361,12 @@ export default function Booking() {
                       })}
                     </div>
                   )}
+
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-4">
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Selected add-ons: {selectedAddonObjects.length}
+                    </p>
+                  </div>
 
                   <div className="flex justify-between pt-2">
                     <button

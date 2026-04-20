@@ -28,6 +28,7 @@ export default function MyBookings() {
   const [editRow, setEditRow]             = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [cancelRow, setCancelRow]         = useState(null);
+  const [cancelError, setCancelError]     = useState('');
   const [formData, setFormData]           = useState({ travel_date: '', num_travelers: 1 });
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -82,6 +83,7 @@ export default function MyBookings() {
   const handleCancel = async () => {
     try {
       setActionLoading(true);
+      setCancelError('');
       setPageError('');
       await api.post(`/bookings/${cancelRow}/cancel`, { reason: 'Customer requested cancellation' });
       setBookings((prev) =>
@@ -91,7 +93,10 @@ export default function MyBookings() {
       );
       setCancelRow(null);
     } catch (err) {
-      setPageError(err.response?.data?.message || 'Failed to cancel booking');
+      setCancelError(
+        err.response?.data?.message ||
+          'This booking cannot be cancelled within 24 hours of the travel date.'
+      );
     } finally {
       setActionLoading(false);
     }
@@ -123,6 +128,13 @@ export default function MyBookings() {
       </div>
     );
   }
+
+  const cancelBooking = bookings.find((b) => b.booking_id === cancelRow);
+  const cancelTravelDate = cancelBooking?.travel_date?.slice(0, 10);
+  const cancelDiffHours = cancelBooking
+    ? (new Date(cancelBooking.travel_date) - new Date()) / (1000 * 60 * 60)
+    : Infinity;
+  const cancelCloseToTravel = cancelDiffHours <= 24;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -190,7 +202,7 @@ export default function MyBookings() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setCancelRow(booking.booking_id)}
+                              onClick={() => { setCancelRow(booking.booking_id); setCancelError(''); }}
                               className="text-red-600 dark:text-red-400 hover:underline text-sm font-medium"
                             >
                               Cancel
@@ -207,7 +219,7 @@ export default function MyBookings() {
         </div>
       </div>
 
-      {/* ── Edit Modal — rendered OUTSIDE the table ── */}
+      {/* ── Edit Modal ── */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeEdit} />
@@ -267,10 +279,10 @@ export default function MyBookings() {
         </div>
       )}
 
-      {/* ── Cancel Confirmation Modal — rendered OUTSIDE the table ── */}
+      {/* ── Cancel Confirmation Modal ── */}
       {cancelRow && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setCancelRow(null)} />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
@@ -283,16 +295,36 @@ export default function MyBookings() {
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">This action cannot be undone.</p>
               </div>
             </div>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-              Are you sure you want to cancel booking <span className="font-medium">{cancelRow}</span>?
+
+            <div className="space-y-1 text-sm text-slate-600 dark:text-slate-300 mb-4">
+              <p><span className="font-medium">Booking ID:</span> {cancelRow}</p>
+              <p><span className="font-medium">Package:</span> {cancelBooking?.package_name}</p>
+              <p><span className="font-medium">Travel Date:</span> {cancelTravelDate}</p>
+            </div>
+
+            <p className="text-sm text-amber-700 dark:text-amber-400 mb-4">
+              Note: Cancellation is not allowed within 24 hours of travel.
             </p>
+
+            {cancelCloseToTravel && (
+              <p className="text-sm text-red-600 dark:text-red-400 mb-4 font-medium">
+                Warning: This trip is within 24 hours of the travel date.
+              </p>
+            )}
+
+            {cancelError && (
+              <div className="mb-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg" role="alert">
+                {cancelError}
+              </div>
+            )}
+
             <div className="flex gap-3 justify-end">
               <button
                 type="button"
-                onClick={() => setCancelRow(null)}
-                className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-600 transition-colors"
+                onClick={() => { setCancelRow(null); setCancelError(''); }}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-sm font-medium rounded-lg transition-colors"
               >
-                Close
+                Keep Booking
               </button>
               <button
                 type="button"

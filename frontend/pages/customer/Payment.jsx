@@ -64,6 +64,10 @@ export default function Payment() {
     }
   };
 
+  const handleTryAgain = () => {
+    setError('');
+  };
+
   if (successData) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center px-4 py-12">
@@ -108,9 +112,33 @@ export default function Payment() {
             Payment
           </h1>
 
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
             Booking ID: {bookingId}
           </p>
+
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm px-4 py-3 rounded-lg">
+            <strong>Test mode:</strong> Use any 16-digit card number starting with <strong>4</strong> to simulate a successful payment (e.g. <code className="font-mono">4111 1111 1111 1111</code>). Any other number will simulate a failed payment.
+          </div>
+
+          {error && (
+            <div className="mb-5 space-y-3">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
+                Payment failed. Please check your card details and try again.
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-sm px-4 py-3 rounded-lg">
+                Your booking is still pending. No charge was made.
+              </div>
+
+              <button
+                type="button"
+                onClick={handleTryAgain}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 text-sm rounded-lg transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
@@ -154,12 +182,6 @@ export default function Payment() {
                 placeholder="123"
               />
             </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">
-                {error}
-              </div>
-            )}
 
             <button
               type="submit"
