@@ -35,8 +35,9 @@ export default function Booking() {
   const [successData, setSuccessData] = useState(null);
 
   useEffect(() => {
-    api.get(`/packages/${id}`)
-      .then(res => setPkg(res.data.data))
+    api
+      .get(`/packages/${id}`)
+      .then((res) => setPkg(res.data.data))
       .catch(() => setPkgError('Package not found. Please go back and try again.'))
       .finally(() => setPkgLoading(false));
   }, [id]);
@@ -44,44 +45,54 @@ export default function Booking() {
   const addons = pkg?.add_ons ?? [];
 
   const selectedAddonObjects = useMemo(
-    () => addons.filter(a => selectedAddons.includes(a.addon_id)),
+    () => addons.filter((addon) => selectedAddons.includes(addon.addon_id)),
     [addons, selectedAddons]
   );
 
   const totalPrice = useMemo(() => {
     if (!pkg) return 0;
-    const addonsTotal = selectedAddonObjects.reduce((sum, a) => sum + Number(a.price), 0);
+    const addonsTotal = selectedAddonObjects.reduce((sum, addon) => sum + Number(addon.price), 0);
     return Number(pkg.total_price) * Number(numTravelers) + addonsTotal;
   }, [pkg, selectedAddonObjects, numTravelers]);
 
   const toggleAddon = (addonId) => {
-    setSelectedAddons(prev =>
-      prev.includes(addonId) ? prev.filter(id => id !== addonId) : [...prev, addonId]
+    setSelectedAddons((prev) =>
+      prev.includes(addonId) ? prev.filter((id) => id !== addonId) : [...prev, addonId]
     );
   };
 
   const handleNextFromStep1 = () => {
     const newErrors = {};
+
     if (!travelDate) newErrors.travelDate = 'Travel date is required';
-    if (!numTravelers || Number(numTravelers) < 1)
+    if (!numTravelers || Number(numTravelers) < 1) {
       newErrors.numTravelers = 'At least 1 traveler is required';
+    }
+
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) setStep(2);
+
+    if (Object.keys(newErrors).length === 0) {
+      setStep(2);
+    }
   };
 
   const handleConfirmBooking = async () => {
     try {
       setLoading(true);
       setSubmitError('');
+
       const res = await api.post('/bookings', {
-        package_id: pkg.package_id,
+        package_id: Number(id),
         travel_date: travelDate,
         num_travelers: Number(numTravelers),
-        addon_ids: selectedAddons.filter(id => id != null),
+        addon_ids: selectedAddons
       });
+
       setSuccessData(res.data.data);
     } catch (error) {
-      setSubmitError(error.response?.data?.message || 'Failed to create booking. Please try again.');
+      setSubmitError(
+        error.response?.data?.message || 'Failed to create booking. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -197,7 +208,9 @@ export default function Booking() {
             </svg>
             Back
           </button>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Book Your Trip</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+            Book Your Trip
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             {pkg.package_name} — {pkg.destination.city}, {pkg.destination.country}
           </p>
@@ -206,34 +219,59 @@ export default function Booking() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
-              <div className="flex items-center gap-2 mb-8">
-                {STEPS.map((label, i) => {
-                  const num = i + 1;
-                  const active = step === num;
-                  const done = step > num;
-                  return (
-                    <div key={num} className="flex items-center gap-2 flex-1 min-w-0">
-                      <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
-                        ${done
-                          ? 'bg-green-500 text-white'
-                          : active
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'}`}>
-                        {done ? (
-                          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : num}
+              <div className="mb-8">
+                <div className="sm:hidden text-sm font-medium text-slate-700 dark:text-slate-200">
+                  Step {step} of 3 — {STEPS[step - 1]}
+                </div>
+
+                <div className="hidden sm:flex items-center gap-2">
+                  {STEPS.map((label, i) => {
+                    const num = i + 1;
+                    const active = step === num;
+                    const done = step > num;
+
+                    return (
+                      <div key={num} className="flex items-center gap-2 flex-1 min-w-0">
+                        <div
+                          className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors
+                          ${
+                            done
+                              ? 'bg-green-500 text-white'
+                              : active
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {done ? (
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            num
+                          )}
+                        </div>
+
+                        <span
+                          className={`text-sm truncate ${
+                            active
+                              ? 'font-medium text-slate-800 dark:text-slate-100'
+                              : 'text-slate-400 dark:text-slate-500'
+                          }`}
+                        >
+                          {label}
+                        </span>
+
+                        {i < STEPS.length - 1 && (
+                          <div
+                            className={`h-px flex-1 mx-1 ${
+                              done ? 'bg-green-400' : 'bg-slate-200 dark:bg-slate-600'
+                            }`}
+                          />
+                        )}
                       </div>
-                      <span className={`text-sm truncate ${active ? 'font-medium text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}`}>
-                        {label}
-                      </span>
-                      {i < STEPS.length - 1 && (
-                        <div className={`h-px flex-1 mx-1 ${done ? 'bg-green-400' : 'bg-slate-200 dark:bg-slate-600'}`} />
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
 
               {step === 1 && (
@@ -245,7 +283,7 @@ export default function Booking() {
                     <input
                       type="date"
                       value={travelDate}
-                      onChange={e => setTravelDate(e.target.value)}
+                      onChange={(e) => setTravelDate(e.target.value)}
                       className={inputClass}
                     />
                     {errors.travelDate && (
@@ -261,7 +299,7 @@ export default function Booking() {
                       type="number"
                       min="1"
                       value={numTravelers}
-                      onChange={e => setNumTravelers(e.target.value)}
+                      onChange={(e) => setNumTravelers(e.target.value)}
                       className={inputClass}
                     />
                     {errors.numTravelers && (
@@ -288,15 +326,18 @@ export default function Booking() {
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {addons.map(addon => {
+                      {addons.map((addon) => {
                         const checked = selectedAddons.includes(addon.addon_id);
+
                         return (
                           <label
                             key={addon.addon_id}
                             className={`flex items-center justify-between p-4 rounded-lg border cursor-pointer transition-colors
-                              ${checked
-                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-500'
-                                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'}`}
+                              ${
+                                checked
+                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-500'
+                                  : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
+                              }`}
                           >
                             <div className="flex items-center gap-3">
                               <input
@@ -309,6 +350,7 @@ export default function Booking() {
                                 {addon.name}
                               </span>
                             </div>
+
                             <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
                               +${Number(addon.price).toLocaleString()}
                             </span>
@@ -325,6 +367,7 @@ export default function Booking() {
                     >
                       ← Back
                     </button>
+
                     <button
                       onClick={() => setStep(3)}
                       className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
@@ -350,10 +393,15 @@ export default function Booking() {
                         Selected Add-ons
                       </p>
                       <div className="space-y-1.5">
-                        {selectedAddonObjects.map(a => (
-                          <div key={a.addon_id} className="flex justify-between text-sm text-slate-600 dark:text-slate-300">
-                            <span>{a.name}</span>
-                            <span className="font-medium">+${Number(a.price).toLocaleString()}</span>
+                        {selectedAddonObjects.map((addon) => (
+                          <div
+                            key={addon.addon_id}
+                            className="flex justify-between text-sm text-slate-600 dark:text-slate-300"
+                          >
+                            <span>{addon.name}</span>
+                            <span className="font-medium">
+                              +${Number(addon.price).toLocaleString()}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -361,7 +409,9 @@ export default function Booking() {
                   )}
 
                   <div className="border-t border-slate-200 dark:border-slate-700 pt-4 flex justify-between items-center">
-                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Total Price</span>
+                    <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+                      Total Price
+                    </span>
                     <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
                       ${totalPrice.toLocaleString()}
                     </span>
@@ -380,6 +430,7 @@ export default function Booking() {
                     >
                       ← Back
                     </button>
+
                     <button
                       onClick={handleConfirmBooking}
                       disabled={loading}
@@ -399,7 +450,11 @@ export default function Booking() {
               <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">
                 Package Summary
               </p>
-              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">{pkg.package_name}</h3>
+
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1">
+                {pkg.package_name}
+              </h3>
+
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
                 {pkg.destination.city}, {pkg.destination.country}
               </p>
@@ -409,14 +464,19 @@ export default function Booking() {
                   <span>Price per traveler</span>
                   <span className="font-medium">${Number(pkg.total_price).toLocaleString()}</span>
                 </div>
+
                 <div className="flex justify-between">
                   <span>Travelers</span>
                   <span className="font-medium">{numTravelers}</span>
                 </div>
-                {selectedAddonObjects.map(a => (
-                  <div key={a.addon_id} className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
-                    <span>{a.name}</span>
-                    <span>+${Number(a.price).toLocaleString()}</span>
+
+                {selectedAddonObjects.map((addon) => (
+                  <div
+                    key={addon.addon_id}
+                    className="flex justify-between text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    <span>{addon.name}</span>
+                    <span>+${Number(addon.price).toLocaleString()}</span>
                   </div>
                 ))}
               </div>

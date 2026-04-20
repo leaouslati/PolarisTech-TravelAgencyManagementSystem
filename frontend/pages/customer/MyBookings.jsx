@@ -22,15 +22,14 @@ function getStatusClass(status) {
 }
 
 export default function MyBookings() {
-  const [bookings, setBookings]         = useState([]);
-  const [loading, setLoading]           = useState(true);
-  const [pageError, setPageError]       = useState('');
-  const [editRow, setEditRow]           = useState(null);   // booking_id being edited
+  const [bookings, setBookings]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [pageError, setPageError]         = useState('');
+  const [editRow, setEditRow]             = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [cancelRow, setCancelRow]       = useState(null);   // booking_id being cancelled
-  const [formData, setFormData]         = useState({ travel_date: '', num_travelers: 1 });
+  const [cancelRow, setCancelRow]         = useState(null);
+  const [formData, setFormData]           = useState({ travel_date: '', num_travelers: 1 });
   const [actionLoading, setActionLoading] = useState(false);
-  const [pendingCancelMsg, setPendingCancelMsg] = useState(false);
 
   const fetchBookings = async () => {
     try {
@@ -63,9 +62,16 @@ export default function MyBookings() {
     try {
       setActionLoading(true);
       setPageError('');
-      await api.put(`/bookings/${editRow}`, formData);
+      const res = await api.put(`/bookings/${editRow}`, formData);
+      const updatedBooking = res.data.data;
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.booking_id === editRow
+            ? { ...b, travel_date: updatedBooking.travel_date, num_travelers: updatedBooking.num_travelers, total_price: updatedBooking.total_price }
+            : b
+        )
+      );
       closeEdit();
-      await fetchBookings();
     } catch (err) {
       setPageError(err.response?.data?.message || 'Failed to modify booking');
     } finally {
@@ -78,16 +84,14 @@ export default function MyBookings() {
       setActionLoading(true);
       setPageError('');
       await api.post(`/bookings/${cancelRow}/cancel`, { reason: 'Customer requested cancellation' });
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.booking_id === cancelRow ? { ...b, status: 'cancelled' } : b
+        )
+      );
       setCancelRow(null);
-      await fetchBookings();
     } catch (err) {
-      const msg = err.response?.data?.message || 'Failed to cancel booking';
-      if (msg.includes('already pending')) {
-        setPendingCancelMsg(true);
-        setTimeout(() => setPendingCancelMsg(false), 3000);
-      } else {
-        setPageError(msg);
-      }
+      setPageError(err.response?.data?.message || 'Failed to cancel booking');
     } finally {
       setActionLoading(false);
     }
@@ -137,16 +141,10 @@ export default function MyBookings() {
           </div>
         )}
 
-        {pendingCancelMsg && (
-          <div className="mb-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-400 text-sm px-4 py-3 rounded-lg">
-            A cancellation request is already pending for this booking
-          </div>
-        )}
-
         {/* Table */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-160 text-sm">
+            <table className="min-w-full text-left">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/40">
                   {['Booking ID', 'Package', 'Destination', 'Travel Date', 'Travelers', 'Status', 'Total Price', 'Actions'].map(h => (
@@ -156,9 +154,10 @@ export default function MyBookings() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+
+              <tbody>
                 {bookings.map((booking) => (
-                  <tr key={booking.booking_id} className="transition-colors align-middle">
+                  <tr key={booking.booking_id} className="transition-colors align-middle border-b border-slate-100 dark:border-slate-700/50 last:border-0">
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300 align-middle">{booking.booking_id}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 align-middle">{booking.package_name}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 align-middle text-center">{booking.destination_city}</td>
