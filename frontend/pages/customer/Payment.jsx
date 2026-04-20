@@ -116,10 +116,6 @@ export default function Payment() {
             Booking ID: {bookingId}
           </p>
 
-          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm px-4 py-3 rounded-lg">
-            <strong>Test mode:</strong> Use any 16-digit card number starting with <strong>4</strong> to simulate a successful payment (e.g. <code className="font-mono">4111 1111 1111 1111</code>). Any other number will simulate a failed payment.
-          </div>
-
           {error && (
             <div className="mb-5 space-y-3">
               <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm px-4 py-3 rounded-lg">

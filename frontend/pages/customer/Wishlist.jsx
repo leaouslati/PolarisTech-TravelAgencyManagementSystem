@@ -83,13 +83,14 @@ const Wishlist = () => {
             </button>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {packages.map(pkg => (
               <div
                 key={pkg.package_id}
-                className="flex bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden relative w-full max-w-md md:w-96"
+                aria-label={`View ${pkg.package_name} Package, $${pkg.total_price?.toLocaleString()}`}
+                className="flex bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden relative"
               >
-                {/* Heart/Unheart button (always visible) */}
+                {/* Remove from wishlist button */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

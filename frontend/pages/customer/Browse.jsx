@@ -167,6 +167,7 @@ const Browse = () => {
     setMinPrice(0);
     setMaxPrice(5000);
     setSelectedDate('');
+    setDrawerOpen(false);
   };
 
   const filterProps = {
@@ -359,13 +360,19 @@ const Browse = () => {
       {drawerOpen && (
         <>
           <div className="fixed inset-0 bg-black/40 z-40" onClick={() => setDrawerOpen(false)} />
-          <div className="fixed lg:inset-y-0 lg:right-0 lg:w-80 lg:max-w-full lg:border-l bottom-0 left-0 right-0 h-3/4 lg:h-auto bg-white dark:bg-slate-800 border-t lg:border-t-0 border-slate-200 dark:border-slate-700 z-50 p-6 overflow-y-auto shadow-xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filters"
+            className="fixed bottom-0 left-0 right-0 h-3/4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-50 p-6 overflow-y-auto shadow-xl"
+          >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Filters
               </h2>
               <button
                 onClick={() => setDrawerOpen(false)}
+                aria-label="Close filters"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

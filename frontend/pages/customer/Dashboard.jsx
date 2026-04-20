@@ -34,12 +34,6 @@ const navCards = [
   },
 ];
 
-const cardColorMap = {
-  blue:   'border-l-4 border-l-blue-500',
-  yellow: 'border-l-4 border-l-yellow-500',
-  red:    'border-l-4 border-l-red-500',
-  green:  'border-l-4 border-l-green-500',
-};
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -151,7 +145,11 @@ export default function CustomerDashboard() {
                 <div
                   key={pkg.package_id}
                   onClick={() => navigate(`/customer/packages/${pkg.package_id}`)}
-                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer"
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate(`/customer/packages/${pkg.package_id}`)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`View ${pkg.package_name} Package, $${pkg.total_price?.toLocaleString()}, ${pkg.duration} days`}
+                  className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden cursor-pointer hover:-translate-y-1 hover:shadow-md transition-all duration-200"
                 >
                   {/* Image area */}
                   <div className="h-44 bg-linear-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center">
