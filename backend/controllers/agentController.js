@@ -43,10 +43,10 @@ exports.getAgentPackages = async (req, res) => {
       });
     }
 
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load packages' });
   }
 };
 
@@ -58,10 +58,10 @@ exports.getDestinations = async (req, res) => {
     const [rows] = await db.query(
       'SELECT destination_id, city, country FROM Destinations ORDER BY country, city'
     );
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load destinations' });
   }
 };
 
@@ -78,7 +78,7 @@ exports.createPackage = async (req, res) => {
   try {
     if (!package_name || !destination_id || !travel_date || !return_date ||
         !duration || !total_price || !available_slots || !description) {
-      return res.status(400).json({ message: 'All required fields must be provided' });
+      return res.status(400).json({ status: 'error', message: 'All required fields must be provided' });
     }
 
     const [result] = await db.query(
@@ -93,10 +93,10 @@ exports.createPackage = async (req, res) => {
       await db.query('INSERT INTO PackageMoods (package_id, mood) VALUES (?, ?)', [packageId, mood]);
     }
 
-    res.status(201).json({ success: true, data: { package_id: packageId } });
+    res.status(201).json({ status: 'success', data: { package_id: packageId } });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to create package' });
   }
 };
 
@@ -114,10 +114,10 @@ exports.updatePackage = async (req, res) => {
     );
 
     if (rows.length === 0)
-      return res.status(404).json({ message: 'Package not found' });
+      return res.status(404).json({ status: 'error', message: 'Package not found' });
 
     if (rows[0].status_availability === 'pending_approval')
-      return res.status(400).json({ message: 'An update is already pending approval for this package' });
+      return res.status(400).json({ status: 'error', message: 'An update is already pending approval for this package' });
 
     await db.query(
       `INSERT INTO PackageUpdateRequests (package_id, agent_id, updated_data, status) VALUES (?, ?, ?, 'pending')`,
@@ -128,10 +128,10 @@ exports.updatePackage = async (req, res) => {
       [id]
     );
 
-    res.json({ success: true, message: 'Update submitted for admin approval' });
+    res.json({ status: 'success', message: 'Update submitted for admin approval' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to submit update' });
   }
 };
 
@@ -148,24 +148,24 @@ exports.deletePackage = async (req, res) => {
       [id, agentId]
     );
     if (rows.length === 0)
-      return res.status(404).json({ message: 'Package not found' });
+      return res.status(404).json({ status: 'error', message: 'Package not found' });
 
     const [[{ active_count }]] = await db.query(
       `SELECT COUNT(*) AS active_count FROM Bookings WHERE package_id = ? AND status IN ('pending','confirmed')`,
       [id]
     );
     if (active_count > 0)
-      return res.status(400).json({ message: 'Cannot remove a package with active bookings' });
+      return res.status(400).json({ status: 'error', message: 'Cannot remove a package with active bookings' });
 
     await db.query(
       `UPDATE TravelPackages SET status_availability = 'inactive' WHERE package_id = ?`,
       [id]
     );
 
-    res.json({ success: true });
+    res.json({ status: 'success' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to delete package' });
   }
 };
 
@@ -196,10 +196,10 @@ exports.getAgentBookings = async (req, res) => {
       ORDER BY b.booking_date DESC
     `, [agentId]);
 
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load bookings' });
   }
 };
 
@@ -217,16 +217,16 @@ exports.approveBooking = async (req, res) => {
        WHERE b.booking_id = ? AND tp.staff_id = ?`,
       [bookingId, agentId]
     );
-    if (rows.length === 0) return res.status(404).json({ message: 'Booking not found' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
+    if (rows.length === 0) return res.status(404).json({ status: 'error', message: 'Booking not found' });
+    if (rows[0].status !== 'pending') return res.status(400).json({ status: 'error', message: 'Booking is not pending' });
 
     await db.query('UPDATE Bookings SET status = "confirmed" WHERE booking_id = ?', [bookingId]);
     await notifyUser(rows[0].customer_id, `Your booking ${bookingId} has been approved by your travel agent`);
 
-    res.json({ success: true });
+    res.json({ status: 'success' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to approve booking' });
   }
 };
 
@@ -244,8 +244,8 @@ exports.declineBooking = async (req, res) => {
        WHERE b.booking_id = ? AND tp.staff_id = ?`,
       [bookingId, agentId]
     );
-    if (rows.length === 0) return res.status(404).json({ message: 'Booking not found' });
-    if (rows[0].status !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
+    if (rows.length === 0) return res.status(404).json({ status: 'error', message: 'Booking not found' });
+    if (rows[0].status !== 'pending') return res.status(400).json({ status: 'error', message: 'Booking is not pending' });
 
     await db.query('UPDATE Bookings SET status = "cancelled" WHERE booking_id = ?', [bookingId]);
     await db.query(
@@ -254,10 +254,10 @@ exports.declineBooking = async (req, res) => {
     );
     await notifyUser(rows[0].customer_id, `Your booking ${bookingId} has been declined by your travel agent`);
 
-    res.json({ success: true });
+    res.json({ status: 'success' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to decline booking' });
   }
 };
 
@@ -284,10 +284,10 @@ exports.getCancellationRequests = async (req, res) => {
       ORDER BY cr.created_at DESC
     `, [agentId]);
 
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load cancellation requests' });
   }
 };
 
@@ -305,10 +305,10 @@ exports.approveCancellation = async (req, res) => {
       'SELECT * FROM CancellationRequests WHERE cancel_id = ? FOR UPDATE',
       [cancelId]
     );
-    if (rows.length === 0) { await conn.rollback(); return res.status(404).json({ message: 'Not found' }); }
+    if (rows.length === 0) { await conn.rollback(); return res.status(404).json({ status: 'error', message: 'Not found' }); }
 
     const c = rows[0];
-    if (c.status !== 'pending') { await conn.rollback(); return res.status(400).json({ message: 'Already reviewed' }); }
+    if (c.status !== 'pending') { await conn.rollback(); return res.status(400).json({ status: 'error', message: 'Already reviewed' }); }
 
     await conn.query('UPDATE CancellationRequests SET status = "approved" WHERE cancel_id = ?', [cancelId]);
     await conn.query('UPDATE Bookings SET status = "cancelled" WHERE booking_id = ?', [c.booking_id]);
@@ -324,11 +324,11 @@ exports.approveCancellation = async (req, res) => {
       `Your cancellation request for booking ${c.booking_id} has been approved. A refund will be processed`
     );
 
-    res.json({ success: true });
+    res.json({ status: 'success' });
   } catch (err) {
     if (conn) await conn.rollback();
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to approve cancellation' });
   } finally {
     if (conn) conn.release();
   }
@@ -341,10 +341,10 @@ exports.rejectCancellation = async (req, res) => {
   const { cancelId } = req.params;
   try {
     const [rows] = await db.query('SELECT * FROM CancellationRequests WHERE cancel_id = ?', [cancelId]);
-    if (rows.length === 0) return res.status(404).json({ message: 'Not found' });
+    if (rows.length === 0) return res.status(404).json({ status: 'error', message: 'Not found' });
 
     const c = rows[0];
-    if (c.status !== 'pending') return res.status(400).json({ message: 'Already reviewed' });
+    if (c.status !== 'pending') return res.status(400).json({ status: 'error', message: 'Already reviewed' });
 
     await db.query('UPDATE CancellationRequests SET status = "rejected" WHERE cancel_id = ?', [cancelId]);
     await notifyUser(
@@ -352,10 +352,10 @@ exports.rejectCancellation = async (req, res) => {
       `Your cancellation request for booking ${c.booking_id} has been rejected. Your booking remains active`
     );
 
-    res.json({ success: true });
+    res.json({ status: 'success' });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to reject cancellation' });
   }
 };
 
@@ -369,7 +369,7 @@ exports.sendMessage = async (req, res) => {
 
   try {
     if (!content || !content.trim())
-      return res.status(400).json({ message: 'Content required' });
+      return res.status(400).json({ status: 'error', message: 'Content required' });
 
     const [result] = await db.query(
       'INSERT INTO Messages (booking_id, sender_id, content) VALUES (?, ?, ?)',
@@ -383,10 +383,10 @@ exports.sendMessage = async (req, res) => {
       WHERE m.message_id = ?
     `, [result.insertId]);
 
-    res.json({ success: true, data: rows[0] });
+    res.json({ status: 'success', data: rows[0] });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to send message' });
   }
 };
 
@@ -404,10 +404,10 @@ exports.getMessages = async (req, res) => {
       ORDER BY m.sent_at ASC
     `, [bookingId]);
 
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load messages' });
   }
 };
 
@@ -421,9 +421,9 @@ exports.getNotifications = async (req, res) => {
       'SELECT * FROM Notifications WHERE user_id = ? ORDER BY created_at DESC',
       [userId]
     );
-    res.json({ success: true, data: rows });
+    res.json({ status: 'success', data: rows });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false });
+    res.status(500).json({ status: 'error', message: 'Failed to load notifications' });
   }
 };

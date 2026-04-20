@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   return (
@@ -8,8 +9,8 @@ const Home = () => {
         Your all-in-one travel agency management platform. Streamline bookings, manage packages, and empower your team with modern tools.
       </p>
       <div className="flex gap-4">
-        <a href="/login" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition">Login</a>
-        <a href="/register" className="px-6 py-3 bg-white dark:bg-[#0F1E35] border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-lg transition hover:bg-blue-50 dark:hover:bg-[#1a2332]">Register</a>
+        <Link to="/login" className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition">Login</Link>
+        <Link to="/register" className="px-6 py-3 bg-white dark:bg-[#0F1E35] border border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400 rounded-xl font-semibold text-lg transition hover:bg-blue-50 dark:hover:bg-[#1a2332]">Register</Link>
       </div>
     </div>
   );

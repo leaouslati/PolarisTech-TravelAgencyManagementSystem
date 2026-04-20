@@ -49,7 +49,7 @@ const PackageDetail = () => {
 
   const toggleWishlist = async () => {
     if (!user) {
-      navigate('/auth/login');
+      navigate('/login');
       return;
     }
     setWishlistLoading(true);

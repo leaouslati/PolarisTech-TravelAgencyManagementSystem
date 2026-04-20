@@ -99,23 +99,14 @@ export default function AdminDashboard() {
         setLoading(true);
         setError('');
 
-        const [usersRes, bookingsRes, updatesRes, reportRes] = await Promise.all([
-          api.get('/admin/users'),
-          api.get('/admin/bookings'),
-          api.get('/admin/package-updates'),
-          api.get('/admin/reports/revenue', {
-            params: {
-              startDate: '2000-01-01',
-              endDate: '2100-12-31',
-            },
-          }),
-        ]);
+        const res = await api.get('/admin/stats');
+        const d = res.data.data;
 
         setStats({
-          totalUsers: usersRes.data.data?.length || 0,
-          totalBookings: bookingsRes.data.data?.length || 0,
-          pendingUpdates: updatesRes.data.data?.length || 0,
-          totalRevenue: Number(reportRes.data.data?.total_revenue || 0),
+          totalUsers: Number(d?.total_users || 0),
+          totalBookings: Number(d?.total_bookings || 0),
+          pendingUpdates: Number(d?.pending_package_updates || 0),
+          totalRevenue: Number(d?.total_revenue || 0),
         });
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load dashboard statistics');

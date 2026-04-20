@@ -188,7 +188,7 @@ export default function PackageUpdates() {
   const packageMap = useMemo(() => {
     const map = new Map();
     packages.forEach((pkg) => {
-      map.set(pkg.package_name, pkg);
+      map.set(pkg.package_id, pkg);
     });
     return map;
   }, [packages]);
@@ -257,7 +257,7 @@ export default function PackageUpdates() {
               <UpdateCard
                 key={u.update_id}
                 update={u}
-                currentPackage={packageMap.get(u.package_name)}
+                currentPackage={packageMap.get(u.package_id)}
                 onApprove={handleApprove}
                 onReject={handleReject}
                 processing={processing}
