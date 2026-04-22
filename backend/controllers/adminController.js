@@ -470,6 +470,7 @@ exports.getPendingPackageUpdates = async (req, res) => {
     const sql = `
       SELECT
         pur.update_id,
+        pur.package_id,
         tp.package_name,
         u.full_name AS agent_name,
         pur.updated_data,
