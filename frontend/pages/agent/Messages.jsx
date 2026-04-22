@@ -19,7 +19,6 @@ export default function Messages() {
   const bottomRef = useRef(null);
   const inputRef  = useRef(null);
 
-  // AuthContext stores user as JSON under the 'user' key in localStorage
   const currentUserId = Number(JSON.parse(localStorage.getItem('user') || '{}')?.user_id);
 
   useEffect(() => {
@@ -99,18 +98,24 @@ export default function Messages() {
         )}
 
         {!loading && messages.length === 0 && (
+          /* ── Empty state ── */
           <div className="flex flex-col items-center justify-center h-full text-center py-16">
-            <svg className="h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <p className="text-slate-400 dark:text-slate-500 text-sm">No messages yet</p>
-            <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Start the conversation below</p>
+            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4">
+              <svg className="h-7 w-7 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              No messages yet.
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+              Start the conversation with your customer.
+            </p>
           </div>
         )}
 
         {!loading && messages.map((msg) => {
-          // msg.sender_id is returned by the backend; fall back to role check
           const isAgent = msg.sender_id === currentUserId || msg.sender_role === 'TravelAgent';
           return (
             <div key={msg.message_id} className={`flex flex-col ${isAgent ? 'items-end' : 'items-start'}`}>
@@ -147,6 +152,7 @@ export default function Messages() {
             onKeyDown={handleKeyDown}
             rows={1}
             placeholder="Type a message… (Enter to send)"
+            aria-label="Message input"
             className="flex-1 resize-none px-4 py-2.5 text-sm text-slate-800 bg-white border border-slate-200 rounded-xl
                        placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
                        dark:bg-slate-700 dark:text-slate-100 dark:border-slate-600 dark:placeholder:text-slate-500
@@ -156,6 +162,7 @@ export default function Messages() {
           <button
             onClick={handleSend}
             disabled={sending || !content.trim()}
+            aria-label="Send message"
             className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl
                        transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed
                        flex items-center gap-2 shrink-0"

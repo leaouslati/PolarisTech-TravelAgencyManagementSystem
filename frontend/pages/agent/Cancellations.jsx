@@ -27,7 +27,6 @@ export default function Cancellations() {
   const [loading, setLoading]     = useState(true);
   const [actioning, setActioning] = useState({});
 
-
   useEffect(() => {
     api.get('/agent/cancellations')
       .then(res => setRequests(res.data.data ?? []))
@@ -48,7 +47,8 @@ export default function Cancellations() {
       );
     } catch (err) {
       console.error(err);
-      alert(`Failed to ${action} the cancellation. Please try again.`);
+      const msg = err.response?.data?.message || `Failed to ${action} the cancellation. Please try again.`;
+      alert(msg);
     } finally {
       setActioning(prev => {
         const next = { ...prev };
@@ -57,8 +57,6 @@ export default function Cancellations() {
       });
     }
   };
-
-
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -72,8 +70,6 @@ export default function Cancellations() {
           </p>
         </div>
 
-
-
         {/* Table Card */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
 
@@ -83,27 +79,30 @@ export default function Cancellations() {
                 <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded" />
               ))}
             </div>
+
           ) : requests.length === 0 ? (
-            <div className="text-center py-16">
-              <svg className="mx-auto h-10 w-10 text-slate-300 dark:text-slate-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-slate-400 dark:text-slate-500 text-sm font-medium">
-                No cancellation requests
-              </p>
-              <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">
-                All clear — nothing to review right now
+            /* ── Empty state ── */
+            <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mb-4">
+                <svg className="h-7 w-7 text-slate-400 dark:text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                No cancellation requests at this time.
               </p>
             </div>
+
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-200 text-sm">
+              <table className="w-full min-w-200 text-sm" role="table">
                 <thead>
                   <tr className="border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-900/40">
                     {['Booking ID', 'Customer', 'Package', 'Reason', 'Date Requested', 'Status', 'Actions'].map(h => (
                       <th
                         key={h}
+                        scope="col"
                         className="text-left py-3 px-4 text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide whitespace-nowrap"
                       >
                         {h}
@@ -116,14 +115,17 @@ export default function Cancellations() {
                     const isPending   = r.status === 'pending';
                     const busyApprove = actioning[r.cancel_id] === 'approve';
                     const busyReject  = actioning[r.cancel_id] === 'reject';
+                    const bookingLabel = `BK-${String(r.booking_id).padStart(4, '0')}`;
 
                     return (
                       <tr
                         key={r.cancel_id}
-                        className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40"
+                        tabIndex={0}
+                        className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-700/40 focus:outline-none focus:bg-blue-50 dark:focus:bg-blue-900/20"
+                        aria-label={`Cancellation request for booking ${bookingLabel}, ${r.customer_name}, status: ${r.status}`}
                       >
                         <td className="py-3 px-4 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                          {r.booking_id}
+                          {bookingLabel}
                         </td>
                         <td className="py-3 px-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
                           {r.customer_name}
@@ -148,6 +150,7 @@ export default function Cancellations() {
                               <button
                                 onClick={() => !actioning[r.cancel_id] && handleAction(r.cancel_id, 'approve')}
                                 disabled={!!actioning[r.cancel_id]}
+                                aria-label={`Approve cancellation for booking ${bookingLabel}`}
                                 className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 whitespace-nowrap"
                               >
                                 {busyApprove && <Spinner />}
@@ -156,6 +159,7 @@ export default function Cancellations() {
                               <button
                                 onClick={() => !actioning[r.cancel_id] && handleAction(r.cancel_id, 'reject')}
                                 disabled={!!actioning[r.cancel_id]}
+                                aria-label={`Reject cancellation for booking ${bookingLabel}`}
                                 className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                               >
                                 {busyReject && <Spinner />}
