@@ -140,10 +140,23 @@ const Browse = () => {
       if (res.data.status === 'success') setPackages(res.data.data);
       } catch {
       setError('Failed to load packages. Please try again.');
-      toast.error('Failed to load packages. Please try again.', {
-        duration: 5000,
-        position: 'top-right',
-      });
+      toast.custom(
+        (t) => (
+          <div className={`flex items-center gap-3 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 px-4 py-3 rounded-lg shadow-lg transition-opacity ${t.visible ? 'opacity-100' : 'opacity-0'}`}>
+            <svg className="h-5 w-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-sm text-red-600 dark:text-red-400">Failed to load packages. Please try again.</span>
+            <button
+              onClick={() => { toast.dismiss(t.id); fetchPackages(params); }}
+              className="ml-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
+            >
+              Retry
+            </button>
+          </div>
+        ),
+        { position: 'top-right', duration: 5000 }
+      );
       } finally {
       setLoading(false);
     }
@@ -269,7 +282,7 @@ const Browse = () => {
                 <svg className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
-                <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">No packages found</h2>
+                <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">No packages found matching your filters.</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Try adjusting your filters to find more options.</p>
                 <button
                   onClick={clearFilters}
