@@ -253,3 +253,5 @@ CREATE INDEX idx_bookings_customer ON Bookings(customer_id);
 CREATE INDEX idx_bookings_status ON Bookings(status);
 CREATE INDEX idx_notifications_user ON Notifications(user_id);
 CREATE INDEX idx_payments_status ON Payments(payment_status);
+CREATE INDEX idx_packages_price ON TravelPackages(total_price);
+CREATE INDEX idx_moods_mood ON PackageMoods(mood);

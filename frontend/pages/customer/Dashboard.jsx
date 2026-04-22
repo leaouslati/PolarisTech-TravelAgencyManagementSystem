@@ -130,8 +130,12 @@ export default function CustomerDashboard() {
               {error}
             </div>
           ) : recommendations.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-slate-600 dark:text-slate-400 mb-4">No recommendations available yet.</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <svg className="h-12 w-12 text-slate-300 dark:text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
+              </svg>
+              <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">Explore our packages to get personalized recommendations.</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Start browsing and saving packages to receive tailored suggestions.</p>
               <button
                 onClick={() => navigate('/customer/browse')}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
