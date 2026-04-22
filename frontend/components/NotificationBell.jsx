@@ -15,6 +15,7 @@ const timeAgo = (dateStr) => {
 };
 
 const NotificationBell = () => {
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const dropdownRef = useRef(null);
@@ -23,10 +24,13 @@ const NotificationBell = () => {
 
   const fetchNotifications = useCallback(async () => {
     try {
+      setLoading(true);
       const res = await api.get('/notifications');
       setNotifications(res.data?.data || res.data || []);
     } catch {
-      // silently fail — bell stays empty
+      setNotifications([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -46,16 +50,16 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const markOne = async (notificationId) => {
-    try {
-      await api.patch(`/notifications/${notificationId}/read`);
-      setNotifications(prev =>
-        prev.map(n =>
-          n.notification_id === notificationId ? { ...n, is_read: true } : n
-        )
-      );
-    } catch {}
-  };
+const markOne = async (id) => {
+  try {
+    await api.patch(`/notifications/${id}/read`);
+    setNotifications(prev =>
+      prev.map(n =>
+        n.id === id ? { ...n, is_read: true } : n
+      )
+    );
+  } catch {}
+};
 
   const markAll = async () => {
     try {
@@ -113,20 +117,18 @@ const NotificationBell = () => {
           </div>
 
           <div className="overflow-y-auto" style={{ maxHeight: '360px' }}>
-            {notifications.length === 0 ? (
+          {loading ? (
+  <div className="px-4 py-6 text-sm text-slate-400">Loading...</div>
+) : notifications.length === 0 ? (
               <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
                 No notifications yet
               </div>
             ) : (
               notifications.map(n => (
                 <div
-                  key={n.notification_id}
-                  onClick={() => !n.is_read && markOne(n.notification_id)}
-                  className={`flex gap-3 px-4 py-3 border-b border-slate-50 dark:border-slate-700/50 transition cursor-pointer
-                    ${!n.is_read
-                      ? 'bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-700/40'
-                    }`}
+                  key={n.id}
+                  onClick={() => !n.is_read && markOne(n.id)}
+                  className="p-3 border-b cursor-pointer"
                 >
                   <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
                   <div className="flex-1 min-w-0">
