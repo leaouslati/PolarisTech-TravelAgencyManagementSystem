@@ -93,6 +93,63 @@ function EditModal({ user, onClose, onSaved }) {
     }
   };
 
+  function DeactivateModal({ user, error, loading, onConfirm, onCancel }) {
+  const hasBookings = user.active_booking_count > 0;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-6">
+
+        <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">
+          Deactivate User
+        </h3>
+
+        {/* USER INFO */}
+        <div className="mb-4">
+          <p className="font-semibold text-slate-700 dark:text-slate-200">
+            {user.full_name}
+          </p>
+          <p className="text-sm text-slate-500">{user.email}</p>
+          <p className="text-xs text-slate-400">Role: {user.role}</p>
+          <p className="text-xs text-slate-400">
+            Active bookings: {user.active_booking_count}
+          </p>
+        </div>
+
+        {/* WARNING */}
+        {hasBookings ? (
+          <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm mb-4">
+            This user cannot be deactivated while they have active bookings.
+          </div>
+        ) : (
+          <div className="bg-yellow-100 text-yellow-700 p-3 rounded-lg text-sm mb-4">
+            This will deactivate the account.
+          </div>
+        )}
+
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400 mb-3">
+            {error}
+          </p>
+        )}
+
+        <div className="flex justify-end gap-3">
+          <button onClick={onCancel} className="px-4 py-2 bg-slate-200 rounded-lg">
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            disabled={loading || hasBookings}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg disabled:bg-red-300"
+          >
+            {loading ? 'Processing...' : 'Deactivate'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md p-6">
