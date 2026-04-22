@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
+import toast, { Toaster } from 'react-hot-toast';
 
 const MOOD_OPTIONS = ['Adventure', 'Relaxation', 'Cultural', 'Family', 'Romantic'];
 
@@ -137,9 +138,13 @@ const Browse = () => {
       setError(null);
       const res = await api.get('/packages', { params });
       if (res.data.status === 'success') setPackages(res.data.data);
-    } catch {
+      } catch {
       setError('Failed to load packages. Please try again.');
-    } finally {
+      toast.error('Failed to load packages. Please try again.', {
+        duration: 5000,
+        position: 'top-right',
+      });
+      } finally {
       setLoading(false);
     }
   }, []);
@@ -254,8 +259,8 @@ const Browse = () => {
 
             {/* Loading skeleton */}
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-5">
+                {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
               </div>
             ) : packages.length === 0 ? (
 
@@ -383,7 +388,9 @@ const Browse = () => {
             <FilterPanel {...filterProps} />
           </div>
         </>
-      )}
+            )}
+
+      <Toaster />
     </div>
   );
 };

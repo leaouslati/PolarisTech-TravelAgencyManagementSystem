@@ -76,7 +76,7 @@ const getAllPackages = async (req, res) => {
       }))
     );
 
-    return res.status(200).json({ status: 'success', data: result });
+    return res.status(200).json({ status: 'success', message: 'Packages fetched successfully', data: result });
   } catch (err) {
     console.error('getAllPackages error:', err);
     return res.status(500).json({ status: 'error', message: 'Server error' });
@@ -157,6 +157,7 @@ const getOnePackage = async (req, res) => {
 
     return res.status(200).json({
       status: 'success',
+      message: 'Package fetched successfully',
       data: {
         package_id: pkg.package_id,
         package_name: pkg.package_name,
@@ -282,7 +283,7 @@ const getRecommendations = async (req, res) => {
       }))
     );
 
-    return res.status(200).json({ status: 'success', data: result });
+    return res.status(200).json({ status: 'success', message: 'Recommendations fetched successfully', data: result });
   } catch (err) {
     console.error('getRecommendations error:', err);
     return res.status(500).json({ status: 'error', message: 'Server error' });
