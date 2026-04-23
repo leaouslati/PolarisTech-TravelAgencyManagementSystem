@@ -203,5 +203,4 @@ All test accounts use the password: `Test@1234`
 
 
 ## License
-
 This project is developed for educational purposes as part of CSC490 — Software Engineering at the Lebanese American University.
