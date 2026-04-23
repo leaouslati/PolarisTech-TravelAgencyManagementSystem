@@ -9,7 +9,7 @@ app.use(helmet());
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://polaris-tech-travel-agency-manageme.vercel.app/'
+    'https://polaris-tech-travel-agency-manageme.vercel.app'
   ],
   credentials: true
 }));
