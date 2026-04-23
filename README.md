@@ -86,8 +86,8 @@ The system follows three architectural patterns working together:
 ### 1. Clone the repository
 
 
-git clone [https://github.com/leaouslati/PolarisTech-TravelAgencyManagementSystem.git
-cd PolarisTech-TravelAgencyManagementSystem]
+git clone [https://github.com/leaouslati/PolarisTech-TravelAgencyManagementSystem.git]
+cd PolarisTech-TravelAgencyManagementSystem
 
 
 ### 2. Set up the database
