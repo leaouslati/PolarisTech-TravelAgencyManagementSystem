@@ -29,17 +29,42 @@ exports.getAgentPackages = async (req, res) => {
 
     if (rows.length > 0) {
       const ids = rows.map(p => p.package_id);
+      const placeholders = ids.map(() => '?').join(',');
+
       const [moodRows] = await db.query(
-        `SELECT package_id, mood FROM PackageMoods WHERE package_id IN (${ids.map(() => '?').join(',')})`,
-        ids
+        `SELECT package_id, mood FROM PackageMoods WHERE package_id IN (${placeholders})`, ids
       );
-      const moodMap = moodRows.reduce((acc, m) => {
-        (acc[m.package_id] = acc[m.package_id] || []).push(m.mood);
+      const [hotelRows] = await db.query(
+        `SELECT package_id, hotel_id FROM PackageHotels WHERE package_id IN (${placeholders})`, ids
+      );
+      const [flightRows] = await db.query(
+        `SELECT package_id, flight_id FROM PackageFlights WHERE package_id IN (${placeholders})`, ids
+      );
+      const [tourRows] = await db.query(
+        `SELECT package_id, tour_id FROM PackageTours WHERE package_id IN (${placeholders})`, ids
+      );
+      const [addonRows] = await db.query(
+        `SELECT package_id, addon_id, name, price FROM AddOns WHERE package_id IN (${placeholders})`, ids
+      );
+
+      const toMap = (arr, key, val) => arr.reduce((acc, r) => {
+        (acc[r.package_id] = acc[r.package_id] || []).push(val(r));
         return acc;
       }, {});
+
+      const moodMap   = toMap(moodRows,   'mood',      r => r.mood);
+      const hotelMap  = toMap(hotelRows,  'hotel_id',  r => r.hotel_id);
+      const flightMap = toMap(flightRows, 'flight_id', r => r.flight_id);
+      const tourMap   = toMap(tourRows,   'tour_id',   r => r.tour_id);
+      const addonMap  = toMap(addonRows,  'addon_id',  r => ({ addon_id: r.addon_id, name: r.name, price: r.price }));
+
       rows.forEach(p => {
         p.destination = { city: p.city, country: p.country };
-        p.moods = moodMap[p.package_id] || [];
+        p.moods      = moodMap[p.package_id]   || [];
+        p.hotel_ids  = hotelMap[p.package_id]  || [];
+        p.flight_ids = flightMap[p.package_id] || [];
+        p.tour_ids   = tourMap[p.package_id]   || [];
+        p.addons     = addonMap[p.package_id]  || [];
       });
     }
 
@@ -65,6 +90,57 @@ exports.getDestinations = async (req, res) => {
   }
 };
 
+// GET /agent/hotels?destination_id=X
+exports.getHotels = async (req, res) => {
+  const { destination_id } = req.query;
+  try {
+    const [rows] = destination_id
+      ? await db.query(
+          'SELECT hotel_id, hotel_name, room_types, price_per_night, rating FROM Hotels WHERE destination_id = ? AND status_availability = 1',
+          [destination_id]
+        )
+      : await db.query(
+          'SELECT hotel_id, hotel_name, room_types, price_per_night, rating FROM Hotels WHERE status_availability = 1'
+        );
+    res.json({ status: 'success', data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to load hotels' });
+  }
+};
+
+// GET /agent/flights
+exports.getFlights = async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      'SELECT flight_id, airline_name, departure_location, arrival_location, departure_time, arrival_time, seat_availability, price FROM Flights ORDER BY departure_time'
+    );
+    res.json({ status: 'success', data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to load flights' });
+  }
+};
+
+// GET /agent/tours?destination_id=X
+exports.getTours = async (req, res) => {
+  const { destination_id } = req.query;
+  try {
+    const [rows] = destination_id
+      ? await db.query(
+          'SELECT tour_id, tour_name, duration, included_services, price FROM Tours WHERE destination_id = ?',
+          [destination_id]
+        )
+      : await db.query(
+          'SELECT tour_id, tour_name, duration, included_services, price FROM Tours'
+        );
+    res.json({ status: 'success', data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to load tours' });
+  }
+};
+
 // ─────────────────────────────────────────────
 // POST /agent/packages
 // ─────────────────────────────────────────────
@@ -72,7 +148,8 @@ exports.createPackage = async (req, res) => {
   const agentId = req.user.user_id;
   const {
     package_name, destination_id, travel_date, return_date,
-    duration, total_price, description, available_slots, moods = [],
+    duration, total_price, description, available_slots,
+    moods = [], hotel_ids = [], flight_ids = [], tour_ids = [], addons = [],
   } = req.body;
 
   try {
@@ -89,8 +166,23 @@ exports.createPackage = async (req, res) => {
     );
 
     const packageId = result.insertId;
+
     for (const mood of moods) {
       await db.query('INSERT INTO PackageMoods (package_id, mood) VALUES (?, ?)', [packageId, mood]);
+    }
+    for (const hid of hotel_ids) {
+      await db.query('INSERT INTO PackageHotels (package_id, hotel_id) VALUES (?, ?)', [packageId, hid]);
+    }
+    for (const fid of flight_ids) {
+      await db.query('INSERT INTO PackageFlights (package_id, flight_id) VALUES (?, ?)', [packageId, fid]);
+    }
+    for (const tid of tour_ids) {
+      await db.query('INSERT INTO PackageTours (package_id, tour_id) VALUES (?, ?)', [packageId, tid]);
+    }
+    for (const addon of addons) {
+      if (addon.name && addon.price) {
+        await db.query('INSERT INTO AddOns (package_id, name, price) VALUES (?, ?, ?)', [packageId, addon.name, addon.price]);
+      }
     }
 
     res.status(201).json({ status: 'success', data: { package_id: packageId } });

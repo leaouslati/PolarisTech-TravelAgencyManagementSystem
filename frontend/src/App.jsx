@@ -20,6 +20,7 @@ import Booking from '../pages/customer/Booking';
 import Payment from '../pages/customer/Payment';
 import MyBookings from '../pages/customer/MyBookings';
 import BookingDetail from '../pages/customer/BookingDetail';
+import CustomerMessages from '../pages/customer/Messages';
 
 // Agent pages
 import AgentDashboard from '../pages/agent/Dashboard';
@@ -119,6 +120,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['Customer']}>
                 <BookingDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer/messages/:bookingId"
+            element={
+              <ProtectedRoute allowedRoles={['Customer']}>
+                <CustomerMessages />
               </ProtectedRoute>
             }
           />

@@ -15,5 +15,7 @@ router.post('/:id/addons', bookingController.attachAddons);
 router.put('/:bookingId', bookingController.modifyBooking);
 router.post('/:bookingId/cancel', bookingController.submitCancellation);
 router.post('/:bookingId/pay', bookingController.processPaymentFromBooking);
+router.get('/:bookingId/messages', bookingController.getMessages);
+router.post('/:bookingId/messages', bookingController.sendMessage);
 
 module.exports = router;

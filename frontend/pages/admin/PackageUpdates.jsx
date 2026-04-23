@@ -52,7 +52,10 @@ function UpdateCard({
       ? JSON.parse(update.updated_data)
       : update.updated_data || {};
 
-  const changedFields = Object.keys(proposed).filter((key) => FIELD_LABELS[key]);
+  const changedFields = Object.keys(proposed).filter(
+    (key) => FIELD_LABELS[key] &&
+      formatValue(currentPackage?.[key]) !== formatValue(proposed[key])
+  );
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">

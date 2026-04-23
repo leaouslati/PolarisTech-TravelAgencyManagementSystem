@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
-import toast, { Toaster } from 'react-hot-toast';
+import { XCircle, Calendar, Filter, Search, Users } from 'lucide-react';
 
 const MOOD_OPTIONS = ['Adventure', 'Relaxation', 'Cultural', 'Family', 'Romantic'];
 
@@ -140,23 +140,7 @@ const Browse = () => {
       if (res.data.status === 'success') setPackages(res.data.data);
       } catch {
       setError('Failed to load packages. Please try again.');
-      toast.custom(
-        (t) => (
-          <div className={`flex items-center gap-3 bg-white dark:bg-slate-800 border border-red-200 dark:border-red-800 px-4 py-3 rounded-lg shadow-lg transition-opacity ${t.visible ? 'opacity-100' : 'opacity-0'}`}>
-            <svg className="h-5 w-5 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm text-red-600 dark:text-red-400">Failed to load packages. Please try again.</span>
-            <button
-              onClick={() => { toast.dismiss(t.id); fetchPackages(params); }}
-              className="ml-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
-            >
-              Retry
-            </button>
-          </div>
-        ),
-        { position: 'top-right', duration: 5000 }
-      );
+      // Show error notification using a custom UI (no toast)
       } finally {
       setLoading(false);
     }
@@ -403,7 +387,7 @@ const Browse = () => {
         </>
             )}
 
-      <Toaster />
+
     </div>
   );
 };

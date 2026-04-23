@@ -50,12 +50,12 @@ const NotificationBell = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-const markOne = async (id) => {
+const markOne = async (notification_id) => {
   try {
-    await api.patch(`/notifications/${id}/read`);
+    await api.patch(`/notifications/${notification_id}/read`);
     setNotifications(prev =>
       prev.map(n =>
-        n.id === id ? { ...n, is_read: true } : n
+        n.notification_id === notification_id ? { ...n, is_read: true } : n
       )
     );
   } catch {}
@@ -126,11 +126,11 @@ const markOne = async (id) => {
             ) : (
               notifications.map(n => (
                 <div
-                  key={n.id}
-                  onClick={() => !n.is_read && markOne(n.id)}
-                  className="p-3 border-b cursor-pointer"
+                  key={n.notification_id}
+                  onClick={() => !n.is_read && markOne(n.notification_id)}
+                  className={`p-3 border-b cursor-pointer flex items-center gap-3 transition-colors ${!n.is_read ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-800/40' : 'hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                 >
-                  <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
+                  <span className={`h-2 w-2 rounded-full shrink-0 transition-colors ${!n.is_read ? 'bg-blue-500' : 'bg-transparent'}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-slate-700 dark:text-slate-200 leading-snug">{n.message}</p>
                     <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{timeAgo(n.created_at)}</p>

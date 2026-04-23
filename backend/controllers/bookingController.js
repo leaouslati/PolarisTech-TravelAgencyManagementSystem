@@ -2,6 +2,65 @@
 const db = require('../db/connection');
 const notifyUser = require('../utils/notifyUser');
 
+// GET /bookings/:bookingId/messages
+exports.getMessages = async (req, res) => {
+  const { bookingId } = req.params;
+  const customerId = req.user.user_id;
+  try {
+    const [booking] = await db.query(
+      'SELECT booking_id FROM Bookings WHERE booking_id = ? AND customer_id = ?',
+      [bookingId, customerId]
+    );
+    if (!booking.length)
+      return res.status(403).json({ status: 'error', message: 'Not authorized' });
+
+    const [rows] = await db.query(`
+      SELECT m.message_id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role, m.content, m.sent_at
+      FROM Messages m
+      JOIN Users u ON u.user_id = m.sender_id
+      WHERE m.booking_id = ?
+      ORDER BY m.sent_at ASC
+    `, [bookingId]);
+    res.json({ status: 'success', data: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to load messages' });
+  }
+};
+
+// POST /bookings/:bookingId/messages
+exports.sendMessage = async (req, res) => {
+  const { bookingId } = req.params;
+  const { content } = req.body;
+  const customerId = req.user.user_id;
+  try {
+    if (!content || !content.trim())
+      return res.status(400).json({ status: 'error', message: 'Content required' });
+
+    const [booking] = await db.query(
+      'SELECT booking_id FROM Bookings WHERE booking_id = ? AND customer_id = ?',
+      [bookingId, customerId]
+    );
+    if (!booking.length)
+      return res.status(403).json({ status: 'error', message: 'Not authorized' });
+
+    const [result] = await db.query(
+      'INSERT INTO Messages (booking_id, sender_id, content) VALUES (?, ?, ?)',
+      [bookingId, customerId, content.trim()]
+    );
+    const [rows] = await db.query(`
+      SELECT m.message_id, m.sender_id, u.full_name AS sender_name, u.role AS sender_role, m.content, m.sent_at
+      FROM Messages m
+      JOIN Users u ON u.user_id = m.sender_id
+      WHERE m.message_id = ?
+    `, [result.insertId]);
+    res.json({ status: 'success', data: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to send message' });
+  }
+};
+
 const createBookingCode = async () => {
   const year = new Date().getFullYear();
   const [rows] = await db.execute(`SELECT COUNT(*) AS total FROM Bookings`);

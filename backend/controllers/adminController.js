@@ -353,6 +353,7 @@ exports.getAllPackages = async (req, res) => {
       SELECT
         tp.package_id,
         tp.package_name,
+        tp.destination_id,
         u.full_name AS agent_name,
         CONCAT(d.city, ', ', d.country) AS destination,
         tp.total_price,
@@ -583,6 +584,33 @@ exports.approvePackageUpdate = async (req, res) => {
       `UPDATE TravelPackages SET ${fields.join(', ')} WHERE package_id = ?`,
       values
     );
+
+    if (updatedData.hotel_ids !== undefined) {
+      await conn.query('DELETE FROM PackageHotels WHERE package_id = ?', [updateRequest.package_id]);
+      for (const hid of updatedData.hotel_ids) {
+        await conn.query('INSERT INTO PackageHotels (package_id, hotel_id) VALUES (?, ?)', [updateRequest.package_id, hid]);
+      }
+    }
+    if (updatedData.flight_ids !== undefined) {
+      await conn.query('DELETE FROM PackageFlights WHERE package_id = ?', [updateRequest.package_id]);
+      for (const fid of updatedData.flight_ids) {
+        await conn.query('INSERT INTO PackageFlights (package_id, flight_id) VALUES (?, ?)', [updateRequest.package_id, fid]);
+      }
+    }
+    if (updatedData.tour_ids !== undefined) {
+      await conn.query('DELETE FROM PackageTours WHERE package_id = ?', [updateRequest.package_id]);
+      for (const tid of updatedData.tour_ids) {
+        await conn.query('INSERT INTO PackageTours (package_id, tour_id) VALUES (?, ?)', [updateRequest.package_id, tid]);
+      }
+    }
+    if (updatedData.addons !== undefined) {
+      await conn.query('DELETE FROM AddOns WHERE package_id = ?', [updateRequest.package_id]);
+      for (const addon of updatedData.addons) {
+        if (addon.name && addon.price) {
+          await conn.query('INSERT INTO AddOns (package_id, name, price) VALUES (?, ?, ?)', [updateRequest.package_id, addon.name, addon.price]);
+        }
+      }
+    }
 
     await conn.query(
       `UPDATE PackageUpdateRequests SET status = 'approved' WHERE update_id = ?`,

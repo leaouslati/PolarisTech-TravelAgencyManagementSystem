@@ -15,6 +15,9 @@ router.delete('/packages/:id',    agentController.deletePackage);
 
 // Destinations (dropdown data for package form)
 router.get('/destinations',       agentController.getDestinations);
+router.get('/hotels',             agentController.getHotels);
+router.get('/flights',            agentController.getFlights);
+router.get('/tours',              agentController.getTours);
 
 // Booking requests
 router.get('/bookings',                          agentController.getAgentBookings);

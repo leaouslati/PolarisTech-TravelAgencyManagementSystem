@@ -182,7 +182,7 @@ const BookingRequests = () => {
                             className="text-blue-600 dark:text-blue-400 hover:underline"
                             aria-label={`View messages for booking ${bookingLabel}`}
                           >
-                            {bookingLabel}
+                            {bookingLabel.replace(/^BK-BK/i, 'BK')}
                           </button>
                         </td>
 

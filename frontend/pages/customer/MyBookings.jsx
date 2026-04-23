@@ -170,7 +170,14 @@ export default function MyBookings() {
               <tbody>
                 {bookings.map((booking) => (
                   <tr key={booking.booking_id} className="transition-colors align-middle border-b border-slate-100 dark:border-slate-700/50 last:border-0">
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300 align-middle">{booking.booking_id}</td>
+                    <td className="px-6 py-4 align-middle">
+                      <Link
+                        to={`/customer/messages/${booking.booking_id}`}
+                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      >
+                        {booking.booking_id}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 align-middle">{booking.package_name}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 align-middle text-center">{booking.destination_city}</td>
                     <td className="px-6 py-4 text-slate-600 dark:text-slate-400 align-middle">{booking.travel_date?.slice(0, 10)}</td>

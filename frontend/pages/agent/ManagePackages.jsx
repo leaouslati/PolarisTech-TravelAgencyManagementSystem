@@ -18,6 +18,16 @@ const inputErrorClass =
 const FieldError = ({ message }) =>
   message ? <p className="mt-1 text-xs text-red-500 dark:text-red-400">{message}</p> : null;
 
+const SectionHeading = ({ children }) => (
+  <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mt-6 mb-2 pb-1 border-b border-slate-100 dark:border-slate-700">
+    {children}
+  </h3>
+);
+
+const EmptyPicker = ({ children }) => (
+  <p className="text-xs text-slate-400 dark:text-slate-500 italic">{children}</p>
+);
+
 const EMPTY_FORM = {
   package_name: '',
   destination_id: '',
@@ -28,6 +38,10 @@ const EMPTY_FORM = {
   description: '',
   available_slots: '',
   moods: [],
+  hotel_ids: [],
+  flight_ids: [],
+  tour_ids: [],
+  addons: [],
 };
 
 const EMPTY_ERRORS = {
@@ -49,18 +63,24 @@ const formatDestination = (dest) => {
   return dest;
 };
 
+const fmtDt = (dt) =>
+  dt ? new Date(dt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
 const ManagePackages = () => {
-  const [packages, setPackages] = useState([]);
+  const [packages, setPackages]     = useState([]);
   const [destinations, setDestinations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [hotels, setHotels]         = useState([]);
+  const [flights, setFlights]       = useState([]);
+  const [tours, setTours]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [form, setForm]             = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState(EMPTY_ERRORS);
-  const [editingId, setEditingId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId]   = useState(null);
+  const [showModal, setShowModal]   = useState(false);
   const [submitMessage, setSubmitMessage] = useState('');
-  const [submitError, setSubmitError] = useState('');
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleteError, setDeleteError] = useState('');
+  const [submitError, setSubmitError]     = useState('');
+  const [deleteTarget, setDeleteTarget]   = useState(null);
+  const [deleteError, setDeleteError]     = useState('');
   const toastTimer = useRef(null);
 
   const fetchPackages = async () => {
@@ -81,6 +101,29 @@ const ManagePackages = () => {
       .catch(err => console.error('destinations error:', err));
   }, []);
 
+  // Fetch flights whenever modal opens
+  useEffect(() => {
+    if (!showModal) return;
+    api.get('/agent/flights')
+      .then(res => setFlights(res.data.data || []))
+      .catch(() => setFlights([]));
+  }, [showModal]);
+
+  // Fetch hotels & tours whenever destination changes inside modal
+  useEffect(() => {
+    if (!showModal || !form.destination_id) {
+      setHotels([]);
+      setTours([]);
+      return;
+    }
+    api.get(`/agent/hotels?destination_id=${form.destination_id}`)
+      .then(res => setHotels(res.data.data || []))
+      .catch(() => setHotels([]));
+    api.get(`/agent/tours?destination_id=${form.destination_id}`)
+      .then(res => setTours(res.data.data || []))
+      .catch(() => setTours([]));
+  }, [form.destination_id, showModal]);
+
   useEffect(() => {
     if (submitMessage) {
       clearTimeout(toastTimer.current);
@@ -91,10 +134,12 @@ const ManagePackages = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    if (fieldErrors[name]) {
-      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+    if (name === 'destination_id') {
+      setForm(prev => ({ ...prev, destination_id: value, hotel_ids: [], tour_ids: [] }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
     }
+    if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const toggleMood = (mood) => {
@@ -106,13 +151,35 @@ const ManagePackages = () => {
     }));
   };
 
+  const toggleId = (field, id) => {
+    const numId = Number(id);
+    setForm(prev => ({
+      ...prev,
+      [field]: prev[field].includes(numId)
+        ? prev[field].filter(x => x !== numId)
+        : [...prev[field], numId],
+    }));
+  };
+
+  const addAddon = () =>
+    setForm(prev => ({ ...prev, addons: [...prev.addons, { name: '', price: '' }] }));
+
+  const removeAddon = (i) =>
+    setForm(prev => ({ ...prev, addons: prev.addons.filter((_, idx) => idx !== i) }));
+
+  const updateAddon = (i, field, value) =>
+    setForm(prev => ({
+      ...prev,
+      addons: prev.addons.map((a, idx) => idx === i ? { ...a, [field]: value } : a),
+    }));
+
   const validateFields = () => {
     const errors = { ...EMPTY_ERRORS };
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     if (!form.package_name.trim()) errors.package_name = 'Package name is required.';
-    if (!form.destination_id) errors.destination_id = 'Please select a destination.';
+    if (!form.destination_id)     errors.destination_id = 'Please select a destination.';
 
     if (!form.travel_date) {
       errors.travel_date = 'Travel date is required.';
@@ -150,8 +217,7 @@ const ManagePackages = () => {
     setSubmitError('');
 
     const errors = validateFields();
-    const hasErrors = Object.values(errors).some(Boolean);
-    if (hasErrors) {
+    if (Object.values(errors).some(Boolean)) {
       setFieldErrors(errors);
       return;
     }
@@ -175,15 +241,19 @@ const ManagePackages = () => {
   const handleEdit = (pkg) => {
     setEditingId(pkg.package_id);
     setForm({
-      package_name: pkg.package_name,
-      destination_id: String(pkg.destination_id || ''),
-      travel_date: pkg.travel_date || '',
-      return_date: pkg.return_date || '',
-      duration: pkg.duration != null ? String(pkg.duration) : '',
-      total_price: pkg.total_price != null ? String(pkg.total_price) : '',
-      description: pkg.description || '',
+      package_name:    pkg.package_name,
+      destination_id:  String(pkg.destination_id || ''),
+      travel_date:     pkg.travel_date || '',
+      return_date:     pkg.return_date || '',
+      duration:        pkg.duration != null ? String(pkg.duration) : '',
+      total_price:     pkg.total_price != null ? String(pkg.total_price) : '',
+      description:     pkg.description || '',
       available_slots: pkg.available_slots != null ? String(pkg.available_slots) : '',
-      moods: pkg.moods || [],
+      moods:      pkg.moods || [],
+      hotel_ids:  (pkg.hotel_ids  || []).map(Number),
+      flight_ids: (pkg.flight_ids || []).map(Number),
+      tour_ids:   (pkg.tour_ids   || []).map(Number),
+      addons:     (pkg.addons     || []).map(a => ({ name: a.name, price: String(a.price) })),
     });
     setFieldErrors(EMPTY_ERRORS);
     setSubmitError('');
@@ -223,10 +293,10 @@ const ManagePackages = () => {
 
   const getStatusBadge = (status) => {
     const base = 'px-2.5 py-0.5 text-xs font-medium rounded-full';
-    if (status === 'active') return `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`;
+    if (status === 'active')           return `${base} bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400`;
     if (status === 'pending_approval') return `${base} bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400`;
-    if (status === 'inactive') return `${base} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400`;
-    if (status === 'rejected') return `${base} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`;
+    if (status === 'inactive')         return `${base} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400`;
+    if (status === 'rejected')         return `${base} bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400`;
     return `${base} bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400`;
   };
 
@@ -345,7 +415,7 @@ const ManagePackages = () => {
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
+      {/* ── Create / Edit Modal ── */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={editingId ? 'Edit Package' : 'Create New Package'}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
@@ -373,20 +443,17 @@ const ManagePackages = () => {
               )}
 
               <form onSubmit={handleSubmit} noValidate>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+                {/* ── Basic Info ── */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="package_name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                       Package Name <Required />
                     </label>
                     <input
-                      id="package_name"
-                      name="package_name"
-                      value={form.package_name}
-                      onChange={handleChange}
-                      placeholder="e.g. Paris Adventure"
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.package_name}
+                      id="package_name" name="package_name" value={form.package_name}
+                      onChange={handleChange} placeholder="e.g. Paris Adventure"
+                      aria-required="true" aria-invalid={!!fieldErrors.package_name}
                       className={fieldErrors.package_name ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.package_name} />
@@ -397,12 +464,8 @@ const ManagePackages = () => {
                       Destination <Required />
                     </label>
                     <select
-                      id="destination_id"
-                      name="destination_id"
-                      value={form.destination_id}
-                      onChange={handleChange}
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.destination_id}
+                      id="destination_id" name="destination_id" value={form.destination_id}
+                      onChange={handleChange} aria-required="true" aria-invalid={!!fieldErrors.destination_id}
                       className={fieldErrors.destination_id ? inputErrorClass : inputClass}
                     >
                       <option value="">Select destination</option>
@@ -420,13 +483,8 @@ const ManagePackages = () => {
                       Travel Date <Required />
                     </label>
                     <input
-                      id="travel_date"
-                      type="date"
-                      name="travel_date"
-                      value={form.travel_date}
-                      onChange={handleChange}
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.travel_date}
+                      id="travel_date" type="date" name="travel_date" value={form.travel_date}
+                      onChange={handleChange} aria-required="true" aria-invalid={!!fieldErrors.travel_date}
                       className={fieldErrors.travel_date ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.travel_date} />
@@ -437,13 +495,8 @@ const ManagePackages = () => {
                       Return Date <Required />
                     </label>
                     <input
-                      id="return_date"
-                      type="date"
-                      name="return_date"
-                      value={form.return_date}
-                      onChange={handleChange}
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.return_date}
+                      id="return_date" type="date" name="return_date" value={form.return_date}
+                      onChange={handleChange} aria-required="true" aria-invalid={!!fieldErrors.return_date}
                       className={fieldErrors.return_date ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.return_date} />
@@ -454,15 +507,9 @@ const ManagePackages = () => {
                       Duration (days) <Required />
                     </label>
                     <input
-                      id="duration"
-                      type="number"
-                      name="duration"
-                      value={form.duration}
-                      onChange={handleChange}
-                      placeholder="e.g. 7"
-                      min="1"
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.duration}
+                      id="duration" type="number" name="duration" value={form.duration}
+                      onChange={handleChange} placeholder="e.g. 7" min="1"
+                      aria-required="true" aria-invalid={!!fieldErrors.duration}
                       className={fieldErrors.duration ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.duration} />
@@ -473,15 +520,9 @@ const ManagePackages = () => {
                       Price ($) <Required />
                     </label>
                     <input
-                      id="total_price"
-                      type="number"
-                      name="total_price"
-                      value={form.total_price}
-                      onChange={handleChange}
-                      placeholder="e.g. 1500"
-                      min="1"
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.total_price}
+                      id="total_price" type="number" name="total_price" value={form.total_price}
+                      onChange={handleChange} placeholder="e.g. 1500" min="1"
+                      aria-required="true" aria-invalid={!!fieldErrors.total_price}
                       className={fieldErrors.total_price ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.total_price} />
@@ -492,15 +533,9 @@ const ManagePackages = () => {
                       Available Slots <Required />
                     </label>
                     <input
-                      id="available_slots"
-                      type="number"
-                      name="available_slots"
-                      value={form.available_slots}
-                      onChange={handleChange}
-                      placeholder="e.g. 20"
-                      min="1"
-                      aria-required="true"
-                      aria-invalid={!!fieldErrors.available_slots}
+                      id="available_slots" type="number" name="available_slots" value={form.available_slots}
+                      onChange={handleChange} placeholder="e.g. 20" min="1"
+                      aria-required="true" aria-invalid={!!fieldErrors.available_slots}
                       className={fieldErrors.available_slots ? inputErrorClass : inputClass}
                     />
                     <FieldError message={fieldErrors.available_slots} />
@@ -512,39 +547,168 @@ const ManagePackages = () => {
                     Description <Required />
                   </label>
                   <textarea
-                    id="description"
-                    name="description"
-                    value={form.description}
-                    onChange={handleChange}
-                    rows={3}
-                    placeholder="Describe the package..."
-                    aria-required="true"
-                    aria-invalid={!!fieldErrors.description}
+                    id="description" name="description" value={form.description}
+                    onChange={handleChange} rows={3} placeholder="Describe the package..."
+                    aria-required="true" aria-invalid={!!fieldErrors.description}
                     className={fieldErrors.description ? inputErrorClass : inputClass}
                   />
                   <FieldError message={fieldErrors.description} />
                 </div>
 
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Mood Tags</label>
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Mood tags">
-                    {MOODS.map(mood => (
-                      <button
-                        key={mood}
-                        type="button"
-                        onClick={() => toggleMood(mood)}
-                        aria-pressed={form.moods.includes(mood)}
-                        className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors duration-200
-                          ${form.moods.includes(mood)
-                            ? 'bg-blue-600 text-white border-blue-600'
-                            : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-blue-400'}`}
+                {/* ── Hotels ── */}
+                <SectionHeading>Hotels</SectionHeading>
+                {!form.destination_id ? (
+                  <EmptyPicker>Select a destination first to see available hotels.</EmptyPicker>
+                ) : hotels.length === 0 ? (
+                  <EmptyPicker>No hotels available for this destination.</EmptyPicker>
+                ) : (
+                  <div className="space-y-2">
+                    {hotels.map(h => (
+                      <label
+                        key={h.hotel_id}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                       >
-                        {mood}
-                      </button>
+                        <input
+                          type="checkbox"
+                          checked={form.hotel_ids.includes(Number(h.hotel_id))}
+                          onChange={() => toggleId('hotel_ids', h.hotel_id)}
+                          className="h-4 w-4 rounded accent-blue-600 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{h.hotel_name}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                            {h.room_types} · ${Number(h.price_per_night).toLocaleString()}/night
+                            {h.rating ? ` · ⭐ ${h.rating}` : ''}
+                          </p>
+                        </div>
+                      </label>
                     ))}
                   </div>
+                )}
+
+                {/* ── Flights ── */}
+                <SectionHeading>Flights</SectionHeading>
+                {flights.length === 0 ? (
+                  <EmptyPicker>No flights available.</EmptyPicker>
+                ) : (
+                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                    {flights.map(f => (
+                      <label
+                        key={f.flight_id}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.flight_ids.includes(Number(f.flight_id))}
+                          onChange={() => toggleId('flight_ids', f.flight_id)}
+                          className="h-4 w-4 rounded accent-blue-600 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            {f.airline_name} · {f.departure_location} → {f.arrival_location}
+                          </p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                            {fmtDt(f.departure_time)} → {fmtDt(f.arrival_time)} · {f.seat_availability} · ${Number(f.price).toLocaleString()}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Tours & Itinerary ── */}
+                <SectionHeading>Tours & Itinerary</SectionHeading>
+                {!form.destination_id ? (
+                  <EmptyPicker>Select a destination first to see available tours.</EmptyPicker>
+                ) : tours.length === 0 ? (
+                  <EmptyPicker>No tours available for this destination.</EmptyPicker>
+                ) : (
+                  <div className="space-y-2">
+                    {tours.map(t => (
+                      <label
+                        key={t.tour_id}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-600 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={form.tour_ids.includes(Number(t.tour_id))}
+                          onChange={() => toggleId('tour_ids', t.tour_id)}
+                          className="h-4 w-4 rounded accent-blue-600 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t.tour_name}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500">
+                            {t.duration} day{t.duration !== 1 ? 's' : ''}
+                            {t.included_services ? ` · ${t.included_services}` : ''}
+                            {` · $${Number(t.price).toLocaleString()}/person`}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── Add-ons ── */}
+                <SectionHeading>Add-ons</SectionHeading>
+                <div className="space-y-2">
+                  {form.addons.map((addon, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <input
+                        value={addon.name}
+                        onChange={e => updateAddon(i, 'name', e.target.value)}
+                        placeholder="Add-on name (e.g. Travel Insurance)"
+                        className={inputClass + ' flex-1'}
+                      />
+                      <div className="relative w-32 shrink-0">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">$</span>
+                        <input
+                          type="number"
+                          value={addon.price}
+                          onChange={e => updateAddon(i, 'price', e.target.value)}
+                          placeholder="Price"
+                          min="0"
+                          className={inputClass + ' pl-6'}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeAddon(i)}
+                        aria-label="Remove add-on"
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0"
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addAddon}
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    + Add Add-on
+                  </button>
                 </div>
 
+                {/* ── Mood Tags ── */}
+                <SectionHeading>Mood Tags</SectionHeading>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Mood tags">
+                  {MOODS.map(mood => (
+                    <button
+                      key={mood} type="button" onClick={() => toggleMood(mood)}
+                      aria-pressed={form.moods.includes(mood)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors duration-200
+                        ${form.moods.includes(mood)
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-blue-400'}`}
+                    >
+                      {mood}
+                    </button>
+                  ))}
+                </div>
+
+                {/* ── Actions ── */}
                 <div className="mt-6 flex gap-3">
                   <button
                     type="submit"
@@ -553,20 +717,20 @@ const ManagePackages = () => {
                     {editingId ? 'Submit Update' : 'Create Package'}
                   </button>
                   <button
-                    type="button"
-                    onClick={closeModal}
+                    type="button" onClick={closeModal}
                     className="px-5 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-600 transition-colors duration-200"
                   >
                     Cancel
                   </button>
                 </div>
+
               </form>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* ── Delete Confirmation Modal ── */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Confirm package deletion">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
@@ -596,15 +760,13 @@ const ManagePackages = () => {
 
             <div className="flex gap-3 justify-end">
               <button
-                type="button"
-                onClick={() => setDeleteTarget(null)}
+                type="button" onClick={() => setDeleteTarget(null)}
                 className="px-4 py-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg border border-slate-200 dark:border-slate-600 transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
-                type="button"
-                onClick={handleDeleteConfirmed}
+                type="button" onClick={handleDeleteConfirmed}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
               >
                 Yes, Remove

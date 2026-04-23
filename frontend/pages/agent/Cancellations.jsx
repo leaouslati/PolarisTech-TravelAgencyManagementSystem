@@ -115,7 +115,7 @@ export default function Cancellations() {
                     const isPending   = r.status === 'pending';
                     const busyApprove = actioning[r.cancel_id] === 'approve';
                     const busyReject  = actioning[r.cancel_id] === 'reject';
-                    const bookingLabel = `BK-${String(r.booking_id).padStart(4, '0')}`;
+                    const bookingLabel = `BK-${String(r.booking_id).padStart(4, '0')}`.replace(/^BK-BK/i, 'BK');
 
                     return (
                       <tr
