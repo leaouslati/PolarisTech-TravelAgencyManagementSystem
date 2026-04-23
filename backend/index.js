@@ -6,7 +6,13 @@ require('dotenv').config();
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://polaris-tech-travel-agency-manageme.vercel.app/'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // App Routes
