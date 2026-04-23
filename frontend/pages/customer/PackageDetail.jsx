@@ -24,7 +24,11 @@ const PackageDetail = () => {
           setError('Package not found');
         }
       } catch (err) {
-        setError('Failed to load package');
+        if (err.code === 'ECONNABORTED') {
+          setError('The server is waking up — please try again in a moment.');
+        } else {
+          setError('Failed to load package details.');
+        }
       } finally {
         setLoading(false);
       }
@@ -133,56 +137,68 @@ const PackageDetail = () => {
         {/* Itinerary */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6">
           <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Itinerary & Tours</h2>
-          <div className="space-y-3">
-            {pkg.tours.map((tour, idx) => (
-              <details key={idx} className="group">
-                <summary className="cursor-pointer flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/40 rounded-lg">
-                  <span className="font-medium text-slate-800 dark:text-slate-100">{tour.tour_name}</span>
-                  <svg className="h-5 w-5 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </summary>
-                <div className="mt-2 p-3 text-slate-600 dark:text-slate-400">
-                  <p className="mb-2"><strong>Duration:</strong> {tour.duration} hours</p>
-                  <p><strong>Included:</strong> {tour.included_services}</p>
-                  <p className="mt-2 text-blue-600 dark:text-blue-400 font-medium">${tour.price}</p>
-                </div>
-              </details>
-            ))}
-          </div>
+          {pkg.tours && pkg.tours.length > 0 ? (
+            <div className="space-y-3">
+              {pkg.tours.map((tour, idx) => (
+                <details key={idx} className="group">
+                  <summary className="cursor-pointer flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/40 rounded-lg">
+                    <span className="font-medium text-slate-800 dark:text-slate-100">{tour.tour_name}</span>
+                    <svg className="h-5 w-5 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <div className="mt-2 p-3 text-slate-600 dark:text-slate-400">
+                    <p className="mb-2"><strong>Duration:</strong> {tour.duration} hours</p>
+                    <p><strong>Included:</strong> {tour.included_services}</p>
+                    <p className="mt-2 text-blue-600 dark:text-blue-400 font-medium">${tour.price}</p>
+                  </div>
+                </details>
+              ))}
+            </div>
+          ) : (
+            <p className="text-slate-500 dark:text-slate-400 text-sm">No tours included in this package.</p>
+          )}
         </div>
 
         {/* Hotels & Flights */}
         <div className="grid md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Hotels</h2>
-            <div className="space-y-3">
-              {pkg.hotels.map((hotel, idx) => (
-                <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
-                  <h3 className="font-medium text-slate-800 dark:text-slate-100">{hotel.hotel_name}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Room: {hotel.room_types}</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Rating: {hotel.rating}/5</p>
-                  <p className="text-blue-600 dark:text-blue-400 font-medium">${hotel.price_per_night}/night</p>
-                </div>
-              ))}
-            </div>
+            {pkg.hotels && pkg.hotels.length > 0 ? (
+              <div className="space-y-3">
+                {pkg.hotels.map((hotel, idx) => (
+                  <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
+                    <h3 className="font-medium text-slate-800 dark:text-slate-100">{hotel.hotel_name}</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Room: {hotel.room_types}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Rating: {hotel.rating}/5</p>
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">${hotel.price_per_night}/night</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 dark:text-slate-400 text-sm">No hotels linked to this package.</p>
+            )}
           </div>
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
             <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-3">Flights</h2>
-            <div className="space-y-3">
-              {pkg.flights.map((flight, idx) => (
-                <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
-                  <h3 className="font-medium text-slate-800 dark:text-slate-100">{flight.airline_name}</h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {flight.departure_location} → {flight.arrival_location}
-                  </p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {new Date(flight.departure_time).toLocaleString()} - {new Date(flight.arrival_time).toLocaleString()}
-                  </p>
-                  <p className="text-blue-600 dark:text-blue-400 font-medium">${flight.price}</p>
-                </div>
-              ))}
-            </div>
+            {pkg.flights && pkg.flights.length > 0 ? (
+              <div className="space-y-3">
+                {pkg.flights.map((flight, idx) => (
+                  <div key={idx} className="border-b-2 border-slate-300 dark:border-slate-600 pb-3 last:border-0">
+                    <h3 className="font-medium text-slate-800 dark:text-slate-100">{flight.airline_name}</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {flight.departure_location} → {flight.arrival_location}
+                    </p>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      {new Date(flight.departure_time).toLocaleString()} - {new Date(flight.arrival_time).toLocaleString()}
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">${flight.price}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 dark:text-slate-400 text-sm">No flights linked to this package.</p>
+            )}
           </div>
         </div>
 

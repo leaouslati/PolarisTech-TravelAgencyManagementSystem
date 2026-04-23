@@ -37,10 +37,28 @@ export default function Booking() {
   useEffect(() => {
     api
       .get(`/packages/${id}`)
-      .then((res) => setPkg(res.data.data))
+      .then((res) => {
+        const data = res.data.data;
+        setPkg(data);
+        if (data?.travel_date) {
+          setTravelDate(new Date(data.travel_date).toISOString().split('T')[0]);
+        }
+      })
       .catch(() => setPkgError('Package not found. Please go back and try again.'))
       .finally(() => setPkgLoading(false));
   }, [id]);
+
+  const packageTravelDate = pkg?.travel_date
+    ? new Date(pkg.travel_date).toISOString().split('T')[0]
+    : '';
+
+  const packageMaxDate = pkg?.return_date
+    ? (() => {
+        const d = new Date(pkg.return_date);
+        d.setDate(d.getDate() - 1);
+        return d.toISOString().split('T')[0];
+      })()
+    : '';
 
   const addons = pkg?.add_ons ?? [];
 
@@ -64,9 +82,17 @@ export default function Booking() {
   const handleNextFromStep1 = () => {
     const newErrors = {};
 
-    if (!travelDate) newErrors.travelDate = 'Travel date is required';
+    if (!travelDate) {
+      newErrors.travelDate = 'Travel date is required';
+    } else if (travelDate < packageTravelDate || travelDate > packageMaxDate) {
+      const fmt = (d) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      newErrors.travelDate = `Travel date must be between ${fmt(pkg.travel_date)} and ${fmt(packageMaxDate)}`;
+    }
+
     if (!numTravelers || Number(numTravelers) < 1) {
       newErrors.numTravelers = 'At least 1 traveler is required';
+    } else if (pkg && Number(numTravelers) > pkg.available_slots) {
+      newErrors.numTravelers = `Only ${pkg.available_slots} slot${pkg.available_slots !== 1 ? 's' : ''} available`;
     }
 
     setErrors(newErrors);
@@ -285,9 +311,16 @@ export default function Booking() {
                     <input
                       type="date"
                       value={travelDate}
+                      min={packageTravelDate}
+                      max={packageMaxDate}
                       onChange={(e) => setTravelDate(e.target.value)}
                       className={inputClass}
                     />
+                    {pkg && (
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Available {new Date(pkg.travel_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(packageMaxDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    )}
                     {errors.travelDate && (
                       <p className="mt-1.5 text-xs text-red-500">{errors.travelDate}</p>
                     )}
