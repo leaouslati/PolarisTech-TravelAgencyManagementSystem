@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from '../context/AuthContext';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Navbar from '../components/Navbar';
+import ErrorBoundary from '../components/ErrorBoundary';
 
 // Auth pages
 import Home from '../pages/Home';
@@ -41,7 +42,7 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Navbar />
-
+        <ErrorBoundary>
         <Routes>
           {/* Public */}
           <Route path="/" element={<Home />} />
@@ -219,6 +220,7 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </ErrorBoundary>
       </BrowserRouter>
     </AuthProvider>
   );

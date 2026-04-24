@@ -418,6 +418,12 @@ exports.approveCancellation = async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'This cancellation request has already been reviewed' });
     }
 
+    const [bookingRows] = await conn.query(
+      'SELECT customer_id, total_price FROM Bookings WHERE booking_id = ?',
+      [c.booking_id]
+    );
+    const booking = bookingRows[0];
+
     await conn.query('UPDATE CancellationRequests SET status = "approved" WHERE cancel_id = ?', [cancelId]);
     await conn.query('UPDATE Bookings SET status = "cancelled" WHERE booking_id = ?', [c.booking_id]);
     await conn.query(
@@ -425,11 +431,16 @@ exports.approveCancellation = async (req, res) => {
        WHERE package_id = (SELECT package_id FROM Bookings WHERE booking_id = ?)`,
       [c.booking_id]
     );
+    // Mark the payment as failed (reversed/refunded)
+    await conn.query(
+      `UPDATE Payments SET payment_status = 'failed' WHERE booking_id = ? AND payment_status = 'paid'`,
+      [c.booking_id]
+    );
     await conn.commit();
 
     await notifyUser(
-      c.user_id,
-      `Your cancellation request for booking ${c.booking_id} has been approved. A refund will be processed`
+      booking.customer_id,
+      `Your cancellation request for booking ${c.booking_id} has been approved. A refund of $${Number(booking.total_price).toFixed(2)} has been initiated.`
     );
 
     res.json({ status: 'success' });
