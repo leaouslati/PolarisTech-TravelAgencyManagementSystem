@@ -21,8 +21,8 @@ const sendEmail = async (to, subject, html) => {
     const host = await getSmtpHost();
     const transporter = nodemailer.createTransport({
       host,
-      port: 465,
-      secure: true,
+      port: 587,
+      secure: false,
       connectionTimeout: 10000,
       socketTimeout: 10000,
       auth: {
