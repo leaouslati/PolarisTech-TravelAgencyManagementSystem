@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://polaristech-travelagencymanagementsystem.onrender.com/api',
+  baseURL: 'https://polaristech-travelagencymanagementsystem-production.up.railway.app/api',
   timeout: 90000,
 });
 

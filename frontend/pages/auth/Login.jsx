@@ -81,11 +81,8 @@ const Login = () => {
       redirectByRole(user.role);
     } catch (err) {
       if (err.response?.data?.status === 'locked') {
-        const lockUntil = err.response.data.data?.lock_until;
-        const secsLeft = lockUntil
-          ? Math.max(1, Math.ceil((new Date(lockUntil) - Date.now()) / 1000))
-          : (err.response.data.data?.minutes_remaining ?? 15) * 60;
-        setLockoutSeconds(secsLeft);
+        const minutesLeft = err.response.data.data?.minutes_remaining ?? 15;
+        setLockoutSeconds(minutesLeft * 60);
       } else {
         if (err.response?.status === 401) setFailedAttempts(prev => prev + 1);
         setServerError(err.response?.data?.message || 'Something went wrong. Please try again.');

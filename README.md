@@ -30,7 +30,7 @@ Mayar Kassar: Admin Dashboard · Users · Reports . Package Updates
 | Authentication | JWT + bcrypt |
 | Email | Nodemailer + Gmail SMTP |
 | Deployment — Frontend | Vercel |
-| Deployment — Backend | Render |
+| Deployment — Backend | Railway |
 | Deployment — Database | Railway |
 
 ---
