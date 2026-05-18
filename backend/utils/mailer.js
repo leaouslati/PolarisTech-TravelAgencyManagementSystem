@@ -1,21 +1,35 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns').promises;
 require('dotenv').config();
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  family: 4, // force IPv4 — Render free tier cannot reach Gmail over IPv6
-  connectionTimeout: 10000,
-  socketTimeout: 10000,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+let cachedHost = null;
+
+const getSmtpHost = async () => {
+  if (cachedHost) return cachedHost;
+  try {
+    const addrs = await dns.resolve4('smtp.gmail.com');
+    if (addrs.length > 0) {
+      cachedHost = addrs[0];
+      return cachedHost;
+    }
+  } catch {}
+  return 'smtp.gmail.com';
+};
 
 const sendEmail = async (to, subject, html) => {
   try {
+    const host = await getSmtpHost();
+    const transporter = nodemailer.createTransport({
+      host,
+      port: 465,
+      secure: true,
+      connectionTimeout: 10000,
+      socketTimeout: 10000,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
     await transporter.sendMail({
       from: `"PolarisTech" <${process.env.EMAIL_USER}>`,
       to,
