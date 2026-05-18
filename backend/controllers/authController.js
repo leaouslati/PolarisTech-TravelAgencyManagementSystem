@@ -163,7 +163,7 @@ const login = async (req, res) => {
 
     console.log(`[MFA OTP] ${email} → ${otp}`);
 
-    await sendEmail(
+    sendEmail(
       email,
       'PolarisTech – Login Verification Code',
       `<p>Hi ${user.full_name},</p>
@@ -252,7 +252,7 @@ const forgotPassword = async (req, res) => {
         [otp, otpExpiry, user.user_id]
       );
 
-      await sendEmail(
+      sendEmail(
         email,
         'PolarisTech – Password Reset OTP',
         `<p>Hi ${user.full_name},</p>
