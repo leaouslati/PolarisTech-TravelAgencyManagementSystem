@@ -2,7 +2,10 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  family: 4, // force IPv4 — Render free tier cannot reach Gmail over IPv6
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
