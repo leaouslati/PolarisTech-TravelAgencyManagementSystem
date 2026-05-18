@@ -165,7 +165,7 @@ const login = async (req, res) => {
 
     sendEmail(
       email,
-      'PolarisTech – Login Verification Code',
+      'PolarisTech - Login Verification Code',
       `<p>Hi ${user.full_name},</p>
        <p>Your one-time login verification code is:</p>
        <h2 style="letter-spacing:4px">${otp}</h2>
@@ -254,7 +254,7 @@ const forgotPassword = async (req, res) => {
 
       sendEmail(
         email,
-        'PolarisTech – Password Reset OTP',
+        'PolarisTech - Password Reset OTP',
         `<p>Hi ${user.full_name},</p>
          <p>Your one-time password reset code is:</p>
          <h2 style="letter-spacing:4px">${otp}</h2>
