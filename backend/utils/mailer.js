@@ -3,8 +3,8 @@ require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false,
+  port: 465,
+  secure: true,
   family: 4, // force IPv4 — Render free tier cannot reach Gmail over IPv6
   connectionTimeout: 10000,
   socketTimeout: 10000,
