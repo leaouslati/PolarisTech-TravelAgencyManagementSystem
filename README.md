@@ -26,12 +26,12 @@ Mayar Kassar: Admin Dashboard · Users · Reports . Package Updates
 
 | Frontend | React 18 + Vite + Tailwind CSS v4 |
 | Backend | Node.js + Express.js |
-| Database | MySQL (hosted on Railway) |
+| Database | MySQL |
 | Authentication | JWT + bcrypt |
 | Email | Nodemailer + Gmail SMTP |
 | Deployment — Frontend | Vercel |
-| Deployment — Backend | Railway |
-| Deployment — Database | Railway |
+| Deployment — Backend | Render |
+| Deployment — Database | TiDB cloud |
 
 ---
 
@@ -108,8 +108,7 @@ DB_PASSWORD=your_mysql_password
 DB_NAME=polaris_db
 JWT_SECRET=polaris_super_secret_jwt_key_2026
 PORT=5000
-EMAIL_USER=your_gmail@gmail.com
-EMAIL_PASS=your_gmail_app_password
+
 
 ### 4. Install dependencies and run the backend
 
