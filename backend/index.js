@@ -9,14 +9,18 @@ require('dotenv').config();
 const app = express();
 
 app.set('trust proxy', 1);
-app.use(helmet());
-app.use(cors({
+
+const corsOptions = {
   origin: [
     'http://localhost:5173',
     'https://polaris-tech-travel-agency-manageme.vercel.app'
   ],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(express.json());
 
 // App Routes
