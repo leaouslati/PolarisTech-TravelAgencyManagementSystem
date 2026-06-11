@@ -23,7 +23,8 @@ Mayar Kassar: Admin Dashboard · Users · Reports . Package Updates
 ---
 
 ## Tech Stack
-
+| Category | Technology |
+|------|-------|
 | Frontend | React 18 + Vite + Tailwind CSS v4 |
 | Backend | Node.js + Express.js |
 | Database | MySQL |
